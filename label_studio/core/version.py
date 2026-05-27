@@ -14,6 +14,7 @@ ATTENTION: do not include version_.py to git! It will affect git commit always!
 import json
 import os
 import sys
+from datetime import datetime
 from subprocess import STDOUT, CalledProcessError
 from subprocess import check_output as run
 
@@ -21,6 +22,17 @@ VERSION_FILE = 'version_.py'
 LS_VERSION_FILE = 'ls-version_.py'
 VERSION_OVERRIDE = os.getenv('VERSION_OVERRIDE', '')
 BRANCH_OVERRIDE = os.getenv('BRANCH_OVERRIDE', '')
+
+
+def _build_fallback_info():
+    timestamp = os.getenv('RENDER_GIT_COMMIT_DATE') or datetime.utcnow().strftime('%Y/%m/%d %H:%M:%S')
+    return {
+        'message': os.getenv('RENDER_GIT_COMMIT_MESSAGE', 'build metadata unavailable'),
+        'commit': os.getenv('RENDER_GIT_COMMIT', ''),
+        'date': timestamp,
+        'branch': BRANCH_OVERRIDE or os.getenv('RENDER_GIT_BRANCH', 'develop'),
+        'version': VERSION_OVERRIDE if VERSION_OVERRIDE else '0.0.0+build',
+    }
 
 
 def _write_py(info):
@@ -98,8 +110,16 @@ def get_git_commit_info(skip_os=True, ls=False):
                 .decode('utf8'),
             }
         except CalledProcessError:
+            existing_info = _read_py(ls=True)
+
+            if existing_info:
+                os.chdir(cwd)
+                return existing_info
+
+            info = _build_fallback_info()
+            _write_py(info)
             os.chdir(cwd)
-            return _read_py(ls=True)
+            return info
 
         # create package version
         version = desc.lstrip('v').rstrip().replace('-', '+', 1).replace('-', '.')
