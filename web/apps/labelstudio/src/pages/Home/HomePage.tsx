@@ -1,11 +1,10 @@
-import { IconExternal, IconFolderAdd, IconHumanSignal, IconUserAdd, IconFolderOpen } from "@humansignal/icons";
+import { IconExternal, IconFolderAdd, IconUserAdd, IconFolderOpen } from "@humansignal/icons";
 import { Button, SimpleCard, Spinner, Tooltip, Typography } from "@humansignal/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useUpdatePageTitle } from "@humansignal/core";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { HeidiTips } from "../../components/HeidiTips/HeidiTips";
 import { useAPI } from "../../providers/ApiProvider";
 import { CreateProject } from "../CreateProject/CreateProject";
 import { InviteLink } from "../Organization/PeoplePage/InviteLink";
@@ -22,24 +21,12 @@ import {
 
 const resources = [
   {
-    title: "Documentation",
-    url: "https://labelstud.io/guide/",
+    title: "OpenTrain App",
+    url: "https://app.opentrain.ai",
   },
   {
-    title: "API Documentation",
-    url: "https://api.labelstud.io/api-reference/introduction/getting-started",
-  },
-  {
-    title: "Release Notes",
-    url: "https://labelstud.io/learn/categories/release-notes/",
-  },
-  {
-    title: "LabelStud.io Blog",
-    url: "https://labelstud.io/blog/",
-  },
-  {
-    title: "Slack Community",
-    url: "https://slack.labelstud.io",
+    title: "Contact Support",
+    url: "mailto:support@opentrain.ai",
   },
 ];
 
@@ -206,8 +193,11 @@ export const HomePage: Page = () => {
           </SimpleCard>
         </section>
         <section className="flex flex-col gap-6">
-          <HeidiTips collection="projectSettings" />
-          <SimpleCard title="Resources" description="Learn, explore and get help" data-testid="resources-card">
+          <SimpleCard
+            title="Resources"
+            description="OpenTrain resources and support"
+            data-testid="resources-card"
+          >
             <ul>
               {resources.map((link) => {
                 return (
@@ -226,9 +216,11 @@ export const HomePage: Page = () => {
               })}
             </ul>
           </SimpleCard>
-          <div className="flex gap-2 items-center">
-            <IconHumanSignal />
-            <span className="text-neutral-content-subtle">Label Studio Version: Community</span>
+          <div className="flex gap-3 items-center rounded-lg border border-primary-border-subtle bg-primary-emphasis-subtle px-3 py-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-grape-subtle text-primary-icon font-semibold">
+              OL
+            </div>
+            <span className="text-neutral-content-subtle">Open Label Runtime for OpenTrain</span>
           </div>
         </section>
       </div>

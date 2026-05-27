@@ -34,7 +34,7 @@ const TemplatesInGroup = ({ templates, group, onSelectRecipe, isEdition }) => {
             key={recipe.title}
             onClick={() => !isDisabled && onSelectRecipe(recipe)}
             className={listClass.elem("template").mod({ disabled: isDisabled }).toClassName()}
-            title={isDisabled ? "Enterprise feature - Available in Label Studio Enterprise" : ""}
+            title={isDisabled ? "Managed feature - available in OpenTrain workspaces" : ""}
           >
             <img src={recipe.image} alt={""} />
             <div className="flex flex-col items-center w-full">
@@ -114,9 +114,9 @@ export const TemplatesList = ({ selectedGroup, selectedRecipe, onCustomTemplate,
       <footer className="flex items-center justify-center gap-1">
         <IconInfo className={listClass.elem("info-icon").toClassName()} width="20" height="20" />
         <span>
-          See the documentation to{" "}
-          <a href="https://labelstud.io/guide" target="_blank" rel="noreferrer">
-            contribute a template
+          Need a new template?{" "}
+          <a href="mailto:support@opentrain.ai" target="_blank" rel="noreferrer">
+            Contact OpenTrain support
           </a>
           .
         </span>

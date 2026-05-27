@@ -72,8 +72,8 @@ const EmptyConfigPlaceholder = () => (
     <p>
       Start from one of our predefined templates or create your own config on the Code panel. The labeling config is
       XML-based and you can{" "}
-      <a href="https://labelstud.io/tags/" target="_blank" rel="noreferrer">
-        read about the available tags in our documentation
+      <a href="mailto:support@opentrain.ai" target="_blank" rel="noreferrer">
+        contact OpenTrain support for available tags
       </a>
       .
     </p>
@@ -622,8 +622,8 @@ const Configurator = ({
   const extra = (
     <p className={configClass.elem("tags-link").toClassName()}>
       Configure the labeling interface with tags.&nbsp;
-      <a href="https://labelstud.io/tags/" target="_blank" rel="noreferrer">
-        See all tags
+      <a href="mailto:support@opentrain.ai" target="_blank" rel="noreferrer">
+        Contact support for tag guidance
       </a>
       .
     </p>
