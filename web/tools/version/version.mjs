@@ -51,6 +51,17 @@ const gitBranch = async (options = []) => {
   return branch.trim();
 };
 
+const getFallbackVersionData = () => {
+  const fallbackDate = process.env.RENDER_GIT_COMMIT_DATE || new Date().toISOString();
+
+  return {
+    message: process.env.RENDER_GIT_COMMIT_MESSAGE || "build metadata unavailable",
+    commit: process.env.RENDER_GIT_COMMIT || "",
+    date: new Date(fallbackDate).toISOString(),
+    branch: process.env.RENDER_GIT_BRANCH || "develop",
+  };
+};
+
 /**
  * @typedef {Object} CommitVersion
  * @property {string} message - The commit message of the latest commit to affect the current project
@@ -64,40 +75,44 @@ const gitBranch = async (options = []) => {
  * @returns {Promise<CommitVersion>}
  */
 const getVersionData = async () => {
-  const latestCommitInfo = await gitLog(["-n 1", "-p", "src/*"]);
-  const commitInfo = latestCommitInfo.split("\n");
-  const commit =
-    commitInfo
-      .find((line) => line.startsWith("commit"))
-      ?.trim()
-      .replace("commit", "")
-      .trim() ?? "";
-  let date = commitInfo.find((line) => line.startsWith("Date:")) ?? "";
-  // First non-empty line after the Date: line is the commit message
-  const message =
-    commitInfo
-      .slice(commitInfo.indexOf(date) + 1)
-      .find((line) => line.trim().length > 0)
-      ?.trim() ?? "";
-  // Remove the Date: prefix from the date
-  date = date.replace("Date:", "").trim();
+  try {
+    const latestCommitInfo = await gitLog(["-n 1", "-p", "src/*"]);
+    const commitInfo = latestCommitInfo.split("\n");
+    const commit =
+      commitInfo
+        .find((line) => line.startsWith("commit"))
+        ?.trim()
+        .replace("commit", "")
+        .trim() ?? "";
+    let date = commitInfo.find((line) => line.startsWith("Date:")) ?? "";
+    // First non-empty line after the Date: line is the commit message
+    const message =
+      commitInfo
+        .slice(commitInfo.indexOf(date) + 1)
+        .find((line) => line.trim().length > 0)
+        ?.trim() ?? "";
+    // Remove the Date: prefix from the date
+    date = date.replace("Date:", "").trim();
 
-  // Get the current branch of the latest commit
-  const contains = (await gitBranch(["--contains", commit])).split("\n");
-  let branch = (contains.find((line) => line.startsWith("develop") || line.startsWith("*")) ?? "")
-    .replace("*", "")
-    .trim();
+    // Get the current branch of the latest commit
+    const contains = (await gitBranch(["--contains", commit])).split("\n");
+    let branch = (contains.find((line) => line.startsWith("develop") || line.startsWith("*")) ?? "")
+      .replace("*", "")
+      .trim();
 
-  if (branch === "" || branch.includes("HEAD")) {
-    branch = "develop";
+    if (branch === "" || branch.includes("HEAD")) {
+      branch = "develop";
+    }
+
+    return {
+      message,
+      commit,
+      date: new Date(date).toISOString(),
+      branch,
+    };
+  } catch {
+    return getFallbackVersionData();
   }
-
-  return {
-    message,
-    commit,
-    date: new Date(date).toISOString(),
-    branch,
-  };
 };
 
 const versionLib = async () => {
