@@ -39,12 +39,12 @@ export const EmptyProjectsList = ({ openModal }) => {
   return (
     <div className={cn("empty-projects-page").toClassName()}>
       <img
-        alt="Heidi looking for projects"
+        alt="Open Label empty projects illustration"
         className={cn("empty-projects-page").elem("heidi").toClassName()}
         src={absoluteURL("/static/images/opossum_looking.png")}
       />
-      <h1 className={cn("empty-projects-page").elem("header").toClassName()}>Heidi doesn't see any projects here!</h1>
-      <p>Create one and start labeling your data.</p>
+      <h1 className={cn("empty-projects-page").elem("header").toClassName()}>No Open Label projects yet.</h1>
+      <p>Create your first project to start candidate attempts and review.</p>
       <Button onClick={openModal} className="my-8" aria-label="Create new project">
         Create Project
       </Button>

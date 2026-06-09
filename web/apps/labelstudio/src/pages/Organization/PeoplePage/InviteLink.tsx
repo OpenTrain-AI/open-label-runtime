@@ -57,20 +57,20 @@ const InvitationModal = () => {
     <div className={cn("invite").toClassName()}>
       <Input value={link} style={{ width: "100%" }} readOnly />
       <Typography size="small" className="text-neutral-content-subtler mt-base mb-wider">
-        Invite members to join your Label Studio instance. People that you invite have full access to all of your
-        projects.{" "}
+        Invite teammates to your Open Label workspace. People that you invite have full access to your active
+        projects. Need help with access or onboarding?{" "}
         <a
-          href="https://labelstud.io/guide/signup.html"
+          href="mailto:support@opentrain.ai"
           target="_blank"
           rel="noreferrer"
           className="hover:underline"
           onClick={() =>
             __lsa("docs.organization.add_people.learn_more", {
-              href: "https://labelstud.io/guide/signup.html",
+              href: "mailto:support@opentrain.ai",
             })
           }
         >
-          Learn more
+          Contact support
         </a>
         .
       </Typography>

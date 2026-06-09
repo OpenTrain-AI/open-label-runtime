@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block page_labeling %}
-  <title>403 | Label Studio</title>
+  <title>403 | Open Label</title>
   {{ block.super }}
 {% endblock %}
 
@@ -13,7 +13,7 @@
 
 {% block content %}
 <div class="ls-global-error">
-  <img class="ls-global-error__heidi" src="{{ settings.HOSTNAME }}{% static 'images/heidi-403.svg' %}" alt="Heidi's down" draggable="false" />
+  <img class="ls-global-error__heidi" src="{{ settings.HOSTNAME }}{% static 'images/heidi-403.svg' %}" alt="Open Label access illustration" draggable="false" />
   <h1>Uh oh, this is not permitted.</h1>
   <h2>Here’s a few things you can try:</h2>
   <p class="ls-global-error__actions">

@@ -449,11 +449,11 @@ export const ImportPage = ({
                           Video
                           <Tooltip title="Video format support depends on your browser. Click to learn more.">
                             <a
-                              href="https://labelstud.io/tags/video#Video-format"
+                              href="mailto:support@opentrain.ai"
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center"
-                              aria-label="Learn more about video format support (opens in a new tab)"
+                              aria-label="Contact OpenTrain support about video format support (opens in a new tab)"
                             >
                               <IconInfoOutline className="w-4 h-4 text-primary-content hover:text-primary-content-hover" />
                             </a>
@@ -476,19 +476,19 @@ export const ImportPage = ({
                         <li>
                           We recommend{" "}
                           <a
-                            href="https://labelstud.io/guide/storage.html"
+                            href="mailto:support@opentrain.ai"
                             target="_blank"
                             rel="noopener noreferrer"
-                            aria-label="Cloud Storage documentation (opens in a new tab)"
+                            aria-label="Contact OpenTrain support about cloud storage (opens in a new tab)"
                           >
                             Cloud Storage
                           </a>{" "}
                           over direct uploads due to{" "}
                           <a
-                            href="https://labelstud.io/guide/tasks.html#Import-data-from-the-Label-Studio-UI"
+                            href="mailto:support@opentrain.ai"
                             target="_blank"
                             rel="noopener noreferrer"
-                            aria-label="Upload limitations documentation (opens in a new tab)"
+                            aria-label="Contact OpenTrain support about upload limits (opens in a new tab)"
                           >
                             upload limitations
                           </a>
@@ -497,19 +497,19 @@ export const ImportPage = ({
                         <li>
                           For PDFs, use{" "}
                           <a
-                            href="https://labelstud.io/templates/multi-page-document-annotation"
+                            href="mailto:support@opentrain.ai"
                             target="_blank"
                             rel="noopener noreferrer"
-                            aria-label="Multi-image labeling documentation (opens in a new tab)"
+                            aria-label="Contact OpenTrain support about PDF workflows (opens in a new tab)"
                           >
                             multi-image labeling
                           </a>
                           . JSONL or Parquet (Enterprise only) files require cloud storage.
                         </li>
                         <li>
-                          Check the documentation to{" "}
-                          <a target="_blank" href="https://labelstud.io/guide/predictions.html" rel="noreferrer">
-                            import preannotated data
+                          Need to bring in preannotated data?{" "}
+                          <a target="_blank" href="mailto:support@opentrain.ai" rel="noreferrer">
+                            Contact OpenTrain support
                           </a>
                           .
                         </li>

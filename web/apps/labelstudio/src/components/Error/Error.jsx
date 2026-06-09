@@ -1,13 +1,12 @@
 import { Fragment, useCallback, useMemo, useState } from "react";
 import sanitizeHtml from "sanitize-html";
-import { IconSlack } from "@humansignal/icons";
 import { cn } from "../../utils/bem";
 import { absoluteURL, copyText } from "../../utils/helpers";
 import { Button } from "@humansignal/ui";
 import { Space } from "../Space/Space";
 import "./Error.prefix.css";
 
-const SLACK_INVITE_URL = "https://slack.labelstud.io/?source=product-error-msg";
+const SUPPORT_URL = "mailto:support@opentrain.ai";
 
 export const ErrorWrapper = ({
   title,
@@ -40,7 +39,7 @@ export const ErrorWrapper = ({
           className={cn("error-message").elem("heidi").toClassName()}
           src={absoluteURL("/static/images/opossum_broken.svg")}
           height="111"
-          alt="Heidi's down"
+          alt="Open Label error illustration"
         />
       )}
 
@@ -95,10 +94,9 @@ export const ErrorWrapper = ({
             <Button
               className={cn("error-message").elem("action-slack").toClassName()}
               target="_blank"
-              icon={<IconSlack />}
-              href={SLACK_INVITE_URL}
+              href={SUPPORT_URL}
             >
-              Ask on Slack
+              Contact Support
             </Button>
 
             <Space size="small">

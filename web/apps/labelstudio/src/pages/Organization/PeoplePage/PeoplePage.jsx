@@ -1,7 +1,6 @@
 import { Button } from "@humansignal/ui";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useUpdatePageTitle } from "@humansignal/core";
-import { HeidiTips } from "../../../components/HeidiTips/HeidiTips";
 import { modal } from "../../../components/Modal/Modal";
 import { Space } from "../../../components/Space/Space";
 import { cn } from "../../../utils/bem";
@@ -89,7 +88,23 @@ export const PeoplePage = () => {
         {selectedUser ? (
           <SelectedUser user={selectedUser} onClose={() => selectUser(null)} />
         ) : (
-          isFF(FF_LSDV_E_297) && <HeidiTips collection="organizationPage" />
+          isFF(FF_LSDV_E_297) && (
+            <div className="flex h-full flex-col justify-between rounded-2xl border border-neutral-border bg-neutral-background p-6">
+              <div>
+                <h2 className="text-lg font-semibold">Invite your review team</h2>
+                <p className="mt-3 text-sm text-neutral-content-subtle">
+                  Add employer reviewers and candidate operators to this Open Label workspace from one place.
+                </p>
+              </div>
+              <div className="mt-6 text-sm text-neutral-content-subtle">
+                Need access or permission help?{" "}
+                <a href="mailto:support@opentrain.ai" className="underline hover:no-underline">
+                  Contact OpenTrain support
+                </a>
+                .
+              </div>
+            </div>
+          )
         )}
       </div>
       <InviteLink
