@@ -1,3 +1,29 @@
+# Open Label Runtime
+
+This repository contains OpenTrain's internal Open Label annotation runtime. It is a controlled Label Studio-compatible runtime used by OpenTrain to render annotation and review experiences, receive runtime events, and support Open Label execution flows.
+
+OpenTrain is the product shell, control plane, and source of truth. The customer-facing product is Open Label inside OpenTrain, not generic Label Studio and not this runtime repository.
+
+Before changing product behavior in this repo, read:
+
+- Open Label product spec: https://app.clickup.com/9016532895/v/dc/8cpuqwz-7776/8cpuqwz-12236
+- Agent guidance: `AGENTS.md`
+- Product context: `docs/open-label-product-context.md`
+
+## Product Boundary
+
+- OpenTrain owns employer organizations, teams, permissions, Open Label projects, datasets, tasks, assignments, review/rework state, audit, reporting, and payment evidence.
+- This runtime is internal annotation infrastructure. It may render labeling/review interfaces, execute runtime tasks, expose runtime APIs, and emit webhooks or sync events back to OpenTrain.
+- Normal employers, candidates, AI Trainers, and freelancers should enter through OpenTrain. They should not create separate Label Studio accounts or manage runtime setup.
+- Runtime IDs, provisioning IDs, API tokens, project-linking details, webhook internals, and environment details are implementation details for code, operator docs, and diagnostics only.
+- Job-linked assessments are one workflow. The long-term Open Label product is standalone employer-owned production data labeling inside OpenTrain.
+
+Use OpenTrain/Open Label product language for user-facing surfaces: project, workspace, dataset, task, assignment, review, rework, workspace ready, prepare workspace, and setup pending. Avoid exposing runtime, Label Studio setup, provider-linking, shared-account, or external-credential language to normal users.
+
+## Upstream Label Studio Runtime Reference
+
+This fork still contains upstream Label Studio documentation and implementation details because Open Label uses Label Studio-compatible annotation primitives. Treat the upstream material below as runtime reference, not OpenTrain product direction.
+
 <img src="https://user-images.githubusercontent.com/12534576/192582340-4c9e4401-1fe6-4dbb-95bb-fdbba5493f61.png"/>
 
 ![GitHub](https://img.shields.io/github/license/heartexlabs/label-studio?logo=heartex) ![label-studio:build](https://github.com/HumanSignal/label-studio/workflows/label-studio:build/badge.svg) ![GitHub release](https://img.shields.io/github/v/release/heartexlabs/label-studio?include_prereleases)
