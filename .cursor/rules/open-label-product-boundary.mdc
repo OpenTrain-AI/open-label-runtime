@@ -1,0 +1,22 @@
+---
+description: OpenTrain Open Label product-boundary guidance for runtime changes
+alwaysApply: true
+---
+
+# Open Label Product Boundary
+
+This repository is OpenTrain's internal Open Label annotation runtime. It is not the customer-facing product, not the system of record, and not a generic Label Studio product surface.
+
+OpenTrain app is the product shell/control plane. Open Label is OpenTrain's first-party data labeling platform. This runtime is internal annotation infrastructure used to render annotation/review experiences and return runtime evidence to OpenTrain.
+
+Normal users should not see Label Studio login/signup, runtime setup, runtime project IDs, runtime provisioning IDs, API tokens, provider-linking UX, shared-account UX, or external-credential setup for Open Label.
+
+Use OpenTrain/Open Label product language in user-facing surfaces: project, workspace, dataset, task, assignment, review, rework, workspace ready, prepare workspace, and setup pending.
+
+Runtime, provisioning, webhook, environment, and Label Studio implementation language is acceptable in source code, operator docs, API names, and internal diagnostics, but it should stay hidden from normal product workflows.
+
+Job-linked assessments are one workflow. They do not define the product boundary. The long-term product is standalone employer-owned production data labeling inside OpenTrain.
+
+Before making product-facing changes, read the central spec:
+
+https://app.clickup.com/9016532895/v/dc/8cpuqwz-7776/8cpuqwz-12236
