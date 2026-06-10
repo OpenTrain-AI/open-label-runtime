@@ -63,6 +63,22 @@ def test_provision_creates_project_link_and_webhook(signing_env, org_with_projec
 
 
 @pytest.mark.django_db
+def test_provision_truncates_title_to_model_limit(signing_env, org_with_project):
+    _, _, owner = org_with_project
+    payload = dict(
+        CONTROL_PLANE_PAYLOAD,
+        projectId='cmnlte3u0003f04l5qbw60077-very-long-control-plane-identifier',
+        taskType='image_classification',
+    )
+    response = post_provision(owner, payload)
+    assert response.status_code == 201
+    project = Project.objects.get(id=int(response.json()['runtimeProjectId']))
+    title_max_length = Project._meta.get_field('title').max_length
+    assert len(project.title) <= title_max_length
+    assert project.title.startswith('Open Label')
+
+
+@pytest.mark.django_db
 def test_provision_accepts_nested_config_dict(signing_env, org_with_project):
     _, _, owner = org_with_project
     payload = dict(CONTROL_PLANE_PAYLOAD, labelStudioConfig={'xml': CONTROL_PLANE_PAYLOAD['labelStudioConfig']})
