@@ -1,4 +1,8 @@
+import hashlib
+import hmac
+import json
 import logging
+import os
 from functools import wraps
 
 import requests
@@ -52,10 +56,16 @@ def run_webhook_sync(webhook, action, payload=None):
         data.update(payload)
     try:
         logging.debug('Run webhook %s for action %s', webhook.id, action)
+        body = json.dumps(data, default=str)
+        headers = {'Content-Type': 'application/json', **(webhook.headers or {})}
+        signing_secret = os.environ.get('OPEN_LABEL_WEBHOOK_SECRET', '').strip()
+        if signing_secret:
+            signature = hmac.new(signing_secret.encode('utf-8'), body.encode('utf-8'), hashlib.sha256).hexdigest()
+            headers['x-open-label-signature'] = f'sha256={signature}'
         return requests.post(
             webhook.url,
-            headers=webhook.headers,
-            json=data,
+            headers=headers,
+            data=body,
             timeout=settings.WEBHOOK_TIMEOUT,
         )
     except requests.RequestException as exc:
