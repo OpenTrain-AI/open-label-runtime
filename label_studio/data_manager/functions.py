@@ -327,9 +327,11 @@ def get_prepare_params(request, project):
 
 
 def get_prepared_queryset(request, project):
+    from open_label_bridge.scope import filter_tasks_for_bridge_session
+
     prepare_params = get_prepare_params(request, project)
     queryset = Task.prepared.only_filtered(prepare_params=prepare_params)
-    return queryset
+    return filter_tasks_for_bridge_session(request, queryset)
 
 
 def evaluate_predictions(tasks):

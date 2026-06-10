@@ -4,8 +4,9 @@ BridgeLaunchSessionMiddleware consumes launch tokens carried as ?session= on any
 URL (including the already-shipped /projects/<id>?session=... shape) and converts
 them into an authenticated runtime session.
 
-BridgeAccessMiddleware restricts candidate sessions to their own project and away
-from export/storage/settings/org/webhook/member surfaces.
+BridgeAccessMiddleware restricts candidate and labeler sessions to their own
+project (and assignment scope) and away from export/storage/settings/org/
+webhook/member surfaces.
 """
 
 import logging
@@ -16,6 +17,7 @@ from django.shortcuts import redirect
 from organizations.models import Organization
 
 from .consume import BridgeConsumeError, consume_nonce
+from .scope import RESTRICTED_BRIDGE_ROLES, bridge_session_scope, task_allowed_for_bridge_session
 from .tokens import BridgeTokenError, verify_launch_token
 
 logger = logging.getLogger(__name__)
@@ -49,6 +51,9 @@ BRIDGE_SESSION_BLOCKED_PATTERNS = [
 ]
 
 PROJECT_PATH_PATTERN = re.compile(r'^/(?:api/)?projects/(\d+)')
+TASK_DETAIL_PATTERN = re.compile(r'^/api/tasks/(\d+)')
+ANNOTATION_DETAIL_PATTERN = re.compile(r'^/api/annotations/(\d+)')
+DRAFT_DETAIL_PATTERN = re.compile(r'^/api/drafts/(\d+)')
 
 
 def _stripped_redirect(request):
@@ -104,13 +109,13 @@ class BridgeAccessMiddleware:
             for pattern in BRIDGE_SESSION_BLOCKED_PATTERNS:
                 if pattern.match(request.path):
                     return self._deny(request.path)
-            if bridge.get('role') == 'candidate':
-                denial = self._check_candidate(request, bridge)
+            if bridge.get('role') in RESTRICTED_BRIDGE_ROLES:
+                denial = self._check_restricted(request, bridge)
                 if denial is not None:
                     return denial
         return self.get_response(request)
 
-    def _check_candidate(self, request, bridge):
+    def _check_restricted(self, request, bridge):
         path = request.path
         for pattern in CANDIDATE_BLOCKED_PATTERNS:
             if pattern.match(path):
@@ -123,6 +128,34 @@ class BridgeAccessMiddleware:
         if allowed_project_id is not None:
             match = PROJECT_PATH_PATTERN.match(path)
             if match and int(match.group(1)) != allowed_project_id:
+                return self._deny(path)
+        denial = self._check_task_scope(request)
+        if denial is not None:
+            return denial
+        return None
+
+    def _check_task_scope(self, request):
+        if bridge_session_scope(request) is None:
+            return None
+        path = request.path
+        match = TASK_DETAIL_PATTERN.match(path)
+        if match and not task_allowed_for_bridge_session(request, match.group(1)):
+            return self._deny(path)
+        match = ANNOTATION_DETAIL_PATTERN.match(path)
+        if match:
+            from tasks.models import Annotation
+
+            task_id = Annotation.objects.filter(id=int(match.group(1))).values_list('task_id', flat=True).first()
+            if task_id is None or not task_allowed_for_bridge_session(request, task_id):
+                return self._deny(path)
+        match = DRAFT_DETAIL_PATTERN.match(path)
+        if match:
+            from tasks.models import AnnotationDraft
+
+            task_id = (
+                AnnotationDraft.objects.filter(id=int(match.group(1))).values_list('task_id', flat=True).first()
+            )
+            if task_id is None or not task_allowed_for_bridge_session(request, task_id):
                 return self._deny(path)
         return None
 

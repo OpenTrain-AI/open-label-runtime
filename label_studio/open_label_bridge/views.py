@@ -20,6 +20,7 @@ from webhooks.models import Webhook
 from .consume import BridgeConsumeError, consume_nonce
 from .identity import ensure_bridge_user
 from .models import BridgeProjectLink
+from .scope import normalized_scope_task_ids
 from .tenancy import ensure_runtime_organization
 from .tokens import BridgeTokenError, verify_launch_token
 
@@ -58,11 +59,15 @@ def establish_bridge_session(request, payload):
     auth.login(request, user, backend='django.contrib.auth.backends.ModelBackend')
     # InactivitySessionTimeoutMiddleWare logs out sessions without this stamp
     request.session['last_login'] = time.time()
+    scope_dataset_id = payload.get('scopeDatasetId')
     request.session['open_label_bridge'] = {
         'sessionId': payload['sessionId'],
         'role': payload['actorRole'],
         'downloadPolicy': payload.get('sourceAssetDownloadPolicy'),
         'projectId': project.id if project else None,
+        'assignmentId': payload.get('assignmentId'),
+        'scopeDatasetId': scope_dataset_id if isinstance(scope_dataset_id, str) and scope_dataset_id else None,
+        'scopeTaskIds': normalized_scope_task_ids(payload.get('scopeRuntimeTaskIds')),
     }
     return project
 
@@ -70,7 +75,7 @@ def establish_bridge_session(request, payload):
 def bridge_landing_path(payload, project):
     if project is None:
         return '/projects/'
-    if payload['actorRole'] == 'candidate':
+    if payload['actorRole'] in ('candidate', 'labeler'):
         return f'/projects/{project.id}/data?labeling=1'
     return f'/projects/{project.id}/data'
 
