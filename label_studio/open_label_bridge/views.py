@@ -20,6 +20,7 @@ from webhooks.models import Webhook
 from .consume import BridgeConsumeError, consume_nonce
 from .identity import ensure_bridge_user
 from .models import BridgeProjectLink
+from .tenancy import ensure_runtime_organization
 from .tokens import BridgeTokenError, verify_launch_token
 
 logger = logging.getLogger(__name__)
@@ -110,6 +111,39 @@ def _extract_label_config(value):
     return None
 
 
+def _extract_opentrain_organization_id(data):
+    return _first_string(
+        data.get('openTrainOrganizationId'),
+        data.get('opentrainOrganizationId'),
+        data.get('ownerOrganizationId'),
+    )
+
+
+class BridgeOrganizationCreateAPI(APIView):
+    """Idempotently provisions a dedicated runtime organization for an OpenTrain tenant."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data if isinstance(request.data, dict) else {}
+        opentrain_organization_id = _extract_opentrain_organization_id(data)
+        if not opentrain_organization_id:
+            return Response(
+                {'detail': 'openTrainOrganizationId is required'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        organization, created = ensure_runtime_organization(
+            opentrain_organization_id, title=_first_string(data.get('title'))
+        )
+        return Response(
+            {
+                'runtimeOrganizationId': str(organization.id),
+                'openTrainOrganizationId': opentrain_organization_id,
+            },
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+
 class BridgeProjectCreateAPI(APIView):
     """Accepts the exact provisioning payload the OpenTrain control plane already sends."""
 
@@ -134,7 +168,11 @@ class BridgeProjectCreateAPI(APIView):
 
         label_config = _extract_label_config(data.get('labelStudioConfig'))
         instructions = _first_string(data.get('instructions')) or ''
-        organization = request.user.active_organization or Organization.objects.first()
+        opentrain_organization_id = _extract_opentrain_organization_id(data)
+        if opentrain_organization_id:
+            organization, _ = ensure_runtime_organization(opentrain_organization_id)
+        else:
+            organization = request.user.active_organization or Organization.objects.first()
         if organization is None:
             return Response({'detail': 'No runtime organization available'}, status=status.HTTP_409_CONFLICT)
 
@@ -153,7 +191,7 @@ class BridgeProjectCreateAPI(APIView):
                 label_config=label_config or '<View></View>',
                 expert_instruction=instructions,
                 organization=organization,
-                created_by=request.user,
+                created_by=organization.created_by or request.user,
             )
         except Exception as exc:
             logger.warning('open_label_bridge: project create failed: %s', exc)
@@ -276,4 +314,45 @@ class BridgeTaskBatchCreateAPI(APIView):
         return Response(
             {'created': created},
             status=status.HTTP_201_CREATED if new_tasks else status.HTTP_200_OK,
+        )
+
+
+class BridgeProjectMoveAPI(APIView):
+    """Moves an existing runtime project (and its bridge webhooks) into a tenant organization.
+
+    Used by the control-plane reorg backfill when adopting per-tenant runtime orgs.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, project_id):
+        project = Project.objects.filter(id=project_id).first()
+        if project is None:
+            return Response({'detail': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        data = request.data if isinstance(request.data, dict) else {}
+        opentrain_organization_id = _extract_opentrain_organization_id(data)
+        if not opentrain_organization_id:
+            return Response(
+                {'detail': 'openTrainOrganizationId is required'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        organization, _ = ensure_runtime_organization(opentrain_organization_id)
+        moved = project.organization_id != organization.id
+        if moved:
+            with transaction.atomic():
+                project.organization = organization
+                if organization.created_by is not None:
+                    project.created_by = organization.created_by
+                project.save(update_fields=['organization', 'created_by'])
+                Webhook.objects.filter(project=project).update(organization=organization)
+
+        return Response(
+            {
+                'runtimeProjectId': str(project.id),
+                'runtimeOrganizationId': str(organization.id),
+                'moved': moved,
+            },
+            status=status.HTTP_200_OK,
         )
