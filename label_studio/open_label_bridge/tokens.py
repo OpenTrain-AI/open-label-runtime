@@ -12,7 +12,7 @@ import json
 import os
 import time
 
-VALID_ACTOR_ROLES = ('candidate', 'employer_review')
+VALID_ACTOR_ROLES = ('candidate', 'employer_review', 'labeler')
 
 
 class BridgeTokenError(Exception):

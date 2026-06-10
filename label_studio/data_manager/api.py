@@ -340,7 +340,9 @@ class TaskListAPI(generics.ListCreateAPIView):
         }
 
     def get_task_queryset(self, request, prepare_params):
-        return Task.prepared.only_filtered(prepare_params=prepare_params)
+        from open_label_bridge.scope import filter_tasks_for_bridge_session
+
+        return filter_tasks_for_bridge_session(request, Task.prepared.only_filtered(prepare_params=prepare_params))
 
     @staticmethod
     def prefetch(queryset):
