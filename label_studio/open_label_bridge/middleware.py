@@ -13,6 +13,7 @@ import re
 
 from django.http import JsonResponse
 from django.shortcuts import redirect
+from organizations.models import Organization
 
 from .consume import BridgeConsumeError, consume_nonce
 from .tokens import BridgeTokenError, verify_launch_token
@@ -37,6 +38,14 @@ CANDIDATE_BLOCKED_PATTERNS = [
 
 CANDIDATE_BLOCKED_WRITE_PATTERNS = [
     re.compile(r'^/api/projects/\d+/?$'),
+]
+
+# Blocked for EVERY bridge session (candidate and employer_review alike):
+# shadow users must never reach the control-plane management API or mint
+# long-lived DRF tokens that would outlive their scoped launch session.
+BRIDGE_SESSION_BLOCKED_PATTERNS = [
+    re.compile(r'^/open-label/bridge'),
+    re.compile(r'^/api/current-user/(token|reset-token)'),
 ]
 
 PROJECT_PATH_PATTERN = re.compile(r'^/(?:api/)?projects/(\d+)')
@@ -91,10 +100,14 @@ class BridgeAccessMiddleware:
 
     def __call__(self, request):
         bridge = request.session.get('open_label_bridge') if hasattr(request, 'session') else None
-        if bridge and request.user.is_authenticated and bridge.get('role') == 'candidate':
-            denial = self._check_candidate(request, bridge)
-            if denial is not None:
-                return denial
+        if bridge and request.user.is_authenticated:
+            for pattern in BRIDGE_SESSION_BLOCKED_PATTERNS:
+                if pattern.match(request.path):
+                    return self._deny(request.path)
+            if bridge.get('role') == 'candidate':
+                denial = self._check_candidate(request, bridge)
+                if denial is not None:
+                    return denial
         return self.get_response(request)
 
     def _check_candidate(self, request, bridge):
@@ -114,5 +127,36 @@ class BridgeAccessMiddleware:
         return None
 
     def _deny(self, path):
-        logger.info('open_label_bridge: blocked candidate access to %s', path)
+        logger.info('open_label_bridge: blocked bridge session access to %s', path)
         return JsonResponse({'detail': 'Not available in this labeling session.'}, status=403)
+
+
+class BridgeActiveOrganizationMiddleware:
+    """Tenancy-aware replacement for organizations.middleware.DummyGetSessionMiddleware.
+
+    The stock middleware forced every user into Organization.objects.first(),
+    which breaks per-tenant runtime orgs. This version backfills a missing
+    active_organization from the user's own memberships first and only falls
+    back to the first org for legacy single-org accounts.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        user = getattr(request, 'user', None)
+        if user is not None and user.is_authenticated:
+            if user.active_organization is None:
+                organization = (
+                    user.organizations.filter(organizationmember__deleted_at__isnull=True).first()
+                    or Organization.objects.first()
+                )
+                if organization is not None:
+                    user.active_organization = organization
+                    user.save(update_fields=['active_organization'])
+            if (
+                user.active_organization_id is not None
+                and request.session.get('organization_pk') != user.active_organization_id
+            ):
+                request.session['organization_pk'] = user.active_organization_id
+        return self.get_response(request)

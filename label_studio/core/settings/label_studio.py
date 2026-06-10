@@ -11,7 +11,10 @@ SECRET_KEY = generate_secret_key_if_missing(BASE_DATA_DIR)
 DJANGO_DB = get_env('DJANGO_DB', DJANGO_DB_SQLITE)
 DATABASES = {'default': DATABASES_ALL[DJANGO_DB]}
 
-MIDDLEWARE.append('organizations.middleware.DummyGetSessionMiddleware')
+# Tenancy-aware replacement for DummyGetSessionMiddleware: the stock version
+# forced every user into Organization.objects.first(), which breaks the
+# per-OpenTrain-tenant runtime organizations managed by open_label_bridge.
+MIDDLEWARE.append('open_label_bridge.middleware.BridgeActiveOrganizationMiddleware')
 MIDDLEWARE.append('core.middleware.UpdateLastActivityMiddleware')
 if INACTIVITY_SESSION_TIMEOUT_ENABLED:
     MIDDLEWARE.append('core.middleware.InactivitySessionTimeoutMiddleWare')

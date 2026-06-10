@@ -26,6 +26,21 @@ class BridgeConsumedNonce(models.Model):
         db_table = 'open_label_bridge_consumed_nonce'
 
 
+class BridgeOrganizationLink(models.Model):
+    """Maps an OpenTrain tenant (EmployerOrganization) to its dedicated runtime Organization."""
+
+    organization = models.OneToOneField(
+        'organizations.Organization',
+        on_delete=models.CASCADE,
+        related_name='open_label_bridge_link',
+    )
+    opentrain_organization_id = models.CharField(max_length=128, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'open_label_bridge_organization_link'
+
+
 class BridgeProjectLink(models.Model):
     """Correlates a runtime project with the OpenTrain entities that provisioned it."""
 
