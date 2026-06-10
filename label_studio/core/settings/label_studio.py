@@ -67,3 +67,7 @@ except IOError:
     FEATURE_FLAGS_FROM_FILE = False
 
 STORAGE_PERSISTENCE = get_bool_env('STORAGE_PERSISTENCE', True)
+
+# Render/Cloudflare terminate TLS in front of the runtime, so absolute URLs
+# built from the request must trust the forwarded proto to come out as https.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
