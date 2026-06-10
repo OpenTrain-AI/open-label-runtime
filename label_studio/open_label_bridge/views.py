@@ -127,7 +127,8 @@ class BridgeProjectCreateAPI(APIView):
             title_parts.append(task_type)
         if opentrain_ref:
             title_parts.append(opentrain_ref)
-        title = ' '.join(title_parts)[:120]
+        title_max_length = Project._meta.get_field('title').max_length or 50
+        title = ' '.join(title_parts)[:title_max_length]
 
         label_config = _extract_label_config(data.get('labelStudioConfig'))
         instructions = _first_string(data.get('instructions')) or ''
