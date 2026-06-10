@@ -16,6 +16,10 @@ MIDDLEWARE.append('core.middleware.UpdateLastActivityMiddleware')
 if INACTIVITY_SESSION_TIMEOUT_ENABLED:
     MIDDLEWARE.append('core.middleware.InactivitySessionTimeoutMiddleWare')
 
+INSTALLED_APPS.append('open_label_bridge')
+MIDDLEWARE.append('open_label_bridge.middleware.BridgeLaunchSessionMiddleware')
+MIDDLEWARE.append('open_label_bridge.middleware.BridgeAccessMiddleware')
+
 ADD_DEFAULT_ML_BACKENDS = False
 
 LOGGING['root']['level'] = get_env('LOG_LEVEL', 'WARNING')
