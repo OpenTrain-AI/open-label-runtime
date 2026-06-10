@@ -7,12 +7,14 @@ from django.contrib import auth
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views.decorators.http import require_GET
+from django.db import transaction
 from organizations.models import Organization
 from projects.models import Project
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from tasks.models import Task
 from webhooks.models import Webhook
 
 from .consume import BridgeConsumeError, consume_nonce
@@ -192,4 +194,86 @@ class BridgeProjectCreateAPI(APIView):
                 'project': {'id': project.id, 'title': project.title, 'url': runtime_project_url},
             },
             status=status.HTTP_201_CREATED,
+        )
+
+
+BRIDGE_TASK_BATCH_MAX = 1000
+
+
+class BridgeTaskBatchCreateAPI(APIView):
+    """Bulk task create for control-plane dataset sync.
+
+    Accepts {"tasks": [{"openTrainTaskId": str, "data": dict}, ...]} and is
+    idempotent on data.opentrain_task_id: entries whose OpenTrain id already
+    exists in the project are returned with their existing runtime task id.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, project_id):
+        project = Project.objects.filter(id=project_id).first()
+        if project is None:
+            return Response({'detail': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        data = request.data if isinstance(request.data, dict) else {}
+        entries = data.get('tasks')
+        if not isinstance(entries, list) or not entries:
+            return Response({'detail': 'tasks must be a non-empty list'}, status=status.HTTP_400_BAD_REQUEST)
+        if len(entries) > BRIDGE_TASK_BATCH_MAX:
+            return Response(
+                {'detail': f'tasks exceeds the maximum batch size of {BRIDGE_TASK_BATCH_MAX}'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        normalized = []
+        seen_ids = set()
+        for index, entry in enumerate(entries):
+            record = entry if isinstance(entry, dict) else {}
+            opentrain_task_id = _first_string(record.get('openTrainTaskId'), record.get('opentrainTaskId'))
+            task_data = record.get('data')
+            if not opentrain_task_id or not isinstance(task_data, dict):
+                return Response(
+                    {'detail': f'tasks[{index}] must include openTrainTaskId and a data object'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if opentrain_task_id in seen_ids:
+                return Response(
+                    {'detail': f'tasks[{index}] repeats openTrainTaskId {opentrain_task_id}'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            seen_ids.add(opentrain_task_id)
+            normalized.append((opentrain_task_id, dict(task_data, opentrain_task_id=opentrain_task_id)))
+
+        existing_by_opentrain_id = {}
+        for runtime_task_id, task_data in Task.objects.filter(
+            project=project, data__opentrain_task_id__in=list(seen_ids)
+        ).values_list('id', 'data'):
+            opentrain_task_id = (task_data or {}).get('opentrain_task_id')
+            if isinstance(opentrain_task_id, str) and opentrain_task_id not in existing_by_opentrain_id:
+                existing_by_opentrain_id[opentrain_task_id] = runtime_task_id
+
+        created = []
+        new_tasks = []
+        with transaction.atomic():
+            for opentrain_task_id, task_data in normalized:
+                runtime_task_id = existing_by_opentrain_id.get(opentrain_task_id)
+                if runtime_task_id is None:
+                    task = Task(project=project, data=task_data)
+                    task.save()
+                    runtime_task_id = task.id
+                    new_tasks.append(task)
+                created.append({'openTrainTaskId': opentrain_task_id, 'runtimeTaskId': str(runtime_task_id)})
+
+        if new_tasks:
+            if hasattr(project, 'summary'):
+                project.summary.update_data_columns(new_tasks)
+            project.update_tasks_states(
+                maximum_annotations_changed=False,
+                overlap_cohort_percentage_changed=False,
+                tasks_number_changed=True,
+            )
+
+        return Response(
+            {'created': created},
+            status=status.HTTP_201_CREATED if new_tasks else status.HTTP_200_OK,
         )
