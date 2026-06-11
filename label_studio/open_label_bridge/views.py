@@ -19,7 +19,7 @@ from webhooks.models import Webhook
 
 from .consume import BridgeConsumeError, consume_nonce
 from .identity import ensure_bridge_user
-from .models import BridgeProjectLink
+from .models import BridgeIdentity, BridgeProjectLink
 from .scope import normalized_scope_task_ids
 from .tenancy import ensure_runtime_organization
 from .tokens import BridgeTokenError, verify_launch_token
@@ -319,6 +319,101 @@ class BridgeTaskBatchCreateAPI(APIView):
         return Response(
             {'created': created},
             status=status.HTTP_201_CREATED if new_tasks else status.HTTP_200_OK,
+        )
+
+
+BRIDGE_ANNOTATION_PAGE_DEFAULT = 500
+BRIDGE_ANNOTATION_PAGE_MAX = 1000
+
+
+def _positive_int(value, default):
+    if value is None:
+        return default
+    raw = str(value)
+    if not raw.isdigit():
+        return None
+    parsed = int(raw)
+    return parsed if parsed >= 1 else None
+
+
+def _isoformat(value):
+    return value.isoformat() if value is not None else None
+
+
+class BridgeProjectAnnotationsAPI(APIView):
+    """Paginated annotation read for control-plane exports.
+
+    Annotators are reported as OpenTrain user ids via BridgeIdentity; runtime
+    users without a bridge identity map to null so no runtime identity leaks.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id):
+        project = Project.objects.filter(id=project_id).first()
+        if project is None:
+            return Response({'detail': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        page = _positive_int(request.query_params.get('page'), 1)
+        page_size = _positive_int(request.query_params.get('pageSize'), BRIDGE_ANNOTATION_PAGE_DEFAULT)
+        if page is None or page_size is None:
+            return Response(
+                {'detail': 'page and pageSize must be positive integers'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        page_size = min(page_size, BRIDGE_ANNOTATION_PAGE_MAX)
+
+        queryset = Task.objects.filter(project=project).order_by('id')
+        total = queryset.count()
+        offset = (page - 1) * page_size
+        tasks = list(queryset.prefetch_related('annotations')[offset : offset + page_size])
+
+        completed_by_ids = {
+            annotation.completed_by_id
+            for task in tasks
+            for annotation in task.annotations.all()
+            if annotation.completed_by_id is not None
+        }
+        opentrain_user_by_runtime_id = dict(
+            BridgeIdentity.objects.filter(user_id__in=completed_by_ids).values_list(
+                'user_id', 'opentrain_user_id'
+            )
+        )
+
+        task_payloads = []
+        for task in tasks:
+            task_data = task.data if isinstance(task.data, dict) else {}
+            opentrain_task_id = task_data.get('opentrain_task_id')
+            task_payloads.append(
+                {
+                    'runtimeTaskId': str(task.id),
+                    'openTrainTaskId': opentrain_task_id if isinstance(opentrain_task_id, str) else None,
+                    'annotations': [
+                        {
+                            'runtimeAnnotationId': str(annotation.id),
+                            'result': annotation.result,
+                            'wasCancelled': bool(annotation.was_cancelled),
+                            'leadTimeSeconds': annotation.lead_time,
+                            'createdAt': _isoformat(annotation.created_at),
+                            'updatedAt': _isoformat(annotation.updated_at),
+                            'completedByOpenTrainUserId': opentrain_user_by_runtime_id.get(
+                                annotation.completed_by_id
+                            ),
+                        }
+                        for annotation in task.annotations.all()
+                    ],
+                }
+            )
+
+        return Response(
+            {
+                'tasks': task_payloads,
+                'total': total,
+                'page': page,
+                'pageSize': page_size,
+                'hasMore': offset + len(tasks) < total,
+            },
+            status=status.HTTP_200_OK,
         )
 
 
