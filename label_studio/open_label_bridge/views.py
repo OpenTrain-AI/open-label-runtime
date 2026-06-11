@@ -58,7 +58,9 @@ def establish_bridge_session(request, payload):
         opentrain_organization_id = _first_string(payload.get('openTrainOrganizationId'))
         if opentrain_organization_id:
             organization, _ = ensure_runtime_organization(opentrain_organization_id)
-    user = ensure_bridge_user(payload['actorUserId'], organization)
+    user = ensure_bridge_user(
+        payload['actorUserId'], organization, display_name=_first_string(payload.get('actorDisplayName'))
+    )
     auth.login(request, user, backend='django.contrib.auth.backends.ModelBackend')
     # InactivitySessionTimeoutMiddleWare logs out sessions without this stamp
     request.session['last_login'] = time.time()
