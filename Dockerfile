@@ -42,21 +42,15 @@ RUN apk add --no-cache \
 COPY web/package.json .
 COPY web/yarn.lock .
 COPY web/tools tools
-RUN --mount=type=cache,target=/root/web/.yarn,id=yarn-cache,sharing=private \
-    --mount=type=cache,target=/root/web/.nx,id=nx-cache,sharing=private \
-    yarn install --prefer-offline --no-progress --pure-lockfile --frozen-lockfile --ignore-engines --non-interactive --production=false
+RUN yarn install --prefer-offline --no-progress --pure-lockfile --frozen-lockfile --ignore-engines --non-interactive --production=false
 
 COPY web/ .
 COPY pyproject.toml ../pyproject.toml
-RUN --mount=type=cache,target=/root/web/.yarn,id=yarn-cache,sharing=private \
-    --mount=type=cache,target=/root/web/.nx,id=nx-cache,sharing=private \
-    yarn run build
+RUN yarn run build
 
 ################################ Stage: frontend-version-generator
 FROM frontend-builder AS frontend-version-generator
-RUN --mount=type=cache,target=/root/web/.yarn,id=yarn-cache,sharing=private \
-    --mount=type=cache,target=/root/web/.nx,id=nx-cache,sharing=private \
-    yarn version:libs
+RUN yarn version:libs
 
 ################################ Stage: venv-builder (prepare the virtualenv)
 FROM python:${PYTHON_VERSION}-alpine AS venv-builder
@@ -99,8 +93,7 @@ COPY pyproject.toml poetry.lock README.md ./
 ARG INCLUDE_DEV=false
 
 # Install dependencies
-RUN --mount=type=cache,target=/.poetry-cache,id=poetry-cache-alpine,sharing=private \
-    poetry check --lock && \
+RUN poetry check --lock && \
     if [ "$INCLUDE_DEV" = "true" ]; then \
         poetry install --no-root --extras uwsgi --with test; \
     else \
@@ -109,9 +102,8 @@ RUN --mount=type=cache,target=/.poetry-cache,id=poetry-cache-alpine,sharing=priv
 
 # Install LS
 COPY label_studio label_studio
-RUN --mount=type=cache,target=/.poetry-cache,id=poetry-cache-alpine,sharing=private \
-    # `--extras uwsgi` is mandatory here due to poetry bug: https://github.com/python-poetry/poetry/issues/7302
-    poetry install --only-root --extras uwsgi && \
+# `--extras uwsgi` is mandatory here due to poetry bug: https://github.com/python-poetry/poetry/issues/7302
+RUN poetry install --only-root --extras uwsgi && \
     python3 label_studio/manage.py collectstatic --no-input
 
 ################################ Stage: py-version-generator
