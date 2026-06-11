@@ -66,6 +66,16 @@ FEATURE_FLAGS_DEFAULT_VALUE = True
 # or if file is not set, default is using offline mode
 FEATURE_FLAGS_OFFLINE = get_bool_env('FEATURE_FLAGS_OFFLINE', True)
 
+import os
+
+# With all flags defaulting ON, UTC-204 disables the Data Manager's global user
+# fetch while task `annotators` still arrive as bare user ids, so mobx-state-tree
+# crashes resolving the User reference and the Data Manager renders blank on any
+# project with annotations. Tenant runtime orgs only hold a couple of shadow
+# users, so global user fetching is cheap — force this flag off (env can still
+# override it explicitly).
+os.environ.setdefault('fflag_all_feat_utc_204_users_performance_improvements_in_dm_for_large_orgs', 'false')
+
 FEATURE_FLAGS_FILE = get_env('FEATURE_FLAGS_FILE', 'feature_flags.json')
 FEATURE_FLAGS_FROM_FILE = True
 try:
