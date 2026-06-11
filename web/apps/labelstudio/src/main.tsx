@@ -1,3 +1,4 @@
+import "./utils/embed";
 import { registerAnalytics } from "@humansignal/core";
 registerAnalytics();
 

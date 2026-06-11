@@ -32,7 +32,8 @@ export const ProjectsPage = () => {
   useUpdatePageTitle("Projects");
   const defaultPageSize = Number.parseInt(localStorage.getItem("pages:projects-list") ?? 30);
 
-  const [modal, setModal] = React.useState(false);
+  // ?create=1 (set by the OpenTrain embed launch URL) opens the wizard directly
+  const [modal, setModal] = React.useState(() => new URLSearchParams(location.search).get("create") === "1");
 
   const openModal = () => setModal(true);
 

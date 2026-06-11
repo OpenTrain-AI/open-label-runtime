@@ -22,6 +22,12 @@ if INACTIVITY_SESSION_TIMEOUT_ENABLED:
 INSTALLED_APPS.append('open_label_bridge')
 MIDDLEWARE.append('open_label_bridge.middleware.BridgeLaunchSessionMiddleware')
 MIDDLEWARE.append('open_label_bridge.middleware.BridgeAccessMiddleware')
+# Outermost so its response pass runs last and wins over django-csp/X-Frame-Options.
+MIDDLEWARE.insert(0, 'open_label_bridge.middleware.BridgeFrameAncestorsMiddleware')
+
+# Project webhook payloads carry the OpenTrain linkage so the control plane can
+# mirror runtime-created projects without extra lookups.
+WEBHOOK_SERIALIZERS['project'] = 'open_label_bridge.serializers.OpenLabelProjectWebhookSerializer'
 
 ADD_DEFAULT_ML_BACKENDS = False
 

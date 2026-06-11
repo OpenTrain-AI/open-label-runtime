@@ -1,6 +1,7 @@
 import { Menubar } from "../components/Menubar/Menubar";
 import { ProjectRoutes } from "../routes/ProjectRoutes";
 import { useOrgValidation } from "../hooks/useOrgValidation";
+import { isEmbedded } from "../utils/embed";
 
 export const RootPage = ({ content }) => {
   useOrgValidation();
@@ -9,7 +10,7 @@ export const RootPage = ({ content }) => {
 
   return (
     <Menubar
-      enabled={true}
+      enabled={!isEmbedded()}
       defaultOpened={opened}
       defaultPinned={pinned}
       onSidebarToggle={(visible) => localStorage.setItem("sidebar-opened", visible)}

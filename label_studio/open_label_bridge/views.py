@@ -1,5 +1,4 @@
 import logging
-import os
 import time
 
 from core.label_config import validate_label_config
@@ -21,7 +20,7 @@ from .consume import BridgeConsumeError, consume_nonce
 from .identity import ensure_bridge_user
 from .models import BridgeIdentity, BridgeProjectLink
 from .scope import normalized_scope_task_ids
-from .tenancy import ensure_runtime_organization
+from .tenancy import ensure_control_plane_webhook, ensure_runtime_organization
 from .tokens import BridgeTokenError, verify_launch_token
 
 logger = logging.getLogger(__name__)
@@ -55,6 +54,10 @@ def resolve_runtime_project(payload):
 def establish_bridge_session(request, payload):
     project = resolve_runtime_project(payload)
     organization = project.organization if project else None
+    if organization is None:
+        opentrain_organization_id = _first_string(payload.get('openTrainOrganizationId'))
+        if opentrain_organization_id:
+            organization, _ = ensure_runtime_organization(opentrain_organization_id)
     user = ensure_bridge_user(payload['actorUserId'], organization)
     auth.login(request, user, backend='django.contrib.auth.backends.ModelBackend')
     # InactivitySessionTimeoutMiddleWare logs out sessions without this stamp
@@ -163,13 +166,15 @@ class BridgeProjectCreateAPI(APIView):
             data.get('assessmentVersionId'),
         )
         task_type = _first_string(data.get('taskType'))
+        requested_title = _first_string(data.get('title'), data.get('name'))
         title_parts = ['Open Label']
         if task_type:
             title_parts.append(task_type)
         if opentrain_ref:
             title_parts.append(opentrain_ref)
         title_max_length = Project._meta.get_field('title').max_length or 50
-        title = ' '.join(title_parts)[:title_max_length]
+        title = (requested_title or ' '.join(title_parts))[:title_max_length]
+        description = _first_string(data.get('description')) or ''
 
         label_config = _extract_label_config(data.get('labelStudioConfig'))
         instructions = _first_string(data.get('instructions')) or ''
@@ -193,6 +198,7 @@ class BridgeProjectCreateAPI(APIView):
         try:
             project = Project.objects.create(
                 title=title,
+                description=description,
                 label_config=label_config or '<View></View>',
                 expert_instruction=instructions,
                 organization=organization,
@@ -214,23 +220,7 @@ class BridgeProjectCreateAPI(APIView):
             task_type=task_type,
         )
 
-        webhook_base = os.environ.get('OPEN_LABEL_CONTROL_PLANE_BASE_URL', '').strip().rstrip('/')
-        if webhook_base:
-            headers = {}
-            webhook_secret = os.environ.get('OPEN_LABEL_WEBHOOK_SECRET', '').strip()
-            if webhook_secret:
-                headers['x-open-label-secret'] = webhook_secret
-            bypass_token = os.environ.get('OPEN_LABEL_CONTROL_PLANE_BYPASS_TOKEN', '').strip()
-            if bypass_token:
-                headers['x-vercel-protection-bypass'] = bypass_token
-            Webhook.objects.create(
-                organization=organization,
-                project=project,
-                url=f'{webhook_base}/api/webhooks/open-label',
-                headers=headers,
-                send_payload=True,
-                send_for_all_actions=True,
-            )
+        ensure_control_plane_webhook(organization)
 
         runtime_project_url = request.build_absolute_uri(f'/projects/{project.id}')
         return Response(
@@ -240,6 +230,70 @@ class BridgeProjectCreateAPI(APIView):
                 'project': {'id': project.id, 'title': project.title, 'url': runtime_project_url},
             },
             status=status.HTTP_201_CREATED,
+        )
+
+
+class BridgeProjectUpdateAPI(APIView):
+    """Control-plane initiated metadata updates; bridge writes emit no webhooks, so no echo loop."""
+
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, project_id):
+        project = Project.objects.filter(id=project_id).first()
+        if project is None:
+            return Response({'detail': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        data = request.data if isinstance(request.data, dict) else {}
+        update_fields = []
+        title = _first_string(data.get('title'), data.get('name'))
+        if title:
+            title_max_length = Project._meta.get_field('title').max_length or 50
+            project.title = title[:title_max_length]
+            update_fields.append('title')
+        if isinstance(data.get('description'), str):
+            project.description = data['description']
+            update_fields.append('description')
+        if not update_fields:
+            return Response(
+                {'detail': 'title or description is required'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        project.save(update_fields=update_fields)
+        return Response(
+            {'runtimeProjectId': str(project.id), 'title': project.title},
+            status=status.HTTP_200_OK,
+        )
+
+
+class BridgeProjectLinkAPI(APIView):
+    """Links a runtime-created (wizard) project to its OpenTrain control-plane record."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, project_id):
+        project = Project.objects.filter(id=project_id).first()
+        if project is None:
+            return Response({'detail': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        data = request.data if isinstance(request.data, dict) else {}
+        values = {
+            'opentrain_assessment_id': _first_string(data.get('assessmentId')),
+            'opentrain_assessment_version_id': _first_string(data.get('assessmentVersionId')),
+            'opentrain_project_id': _first_string(data.get('projectId')),
+            'opentrain_project_version_id': _first_string(data.get('projectVersionId')),
+            'task_type': _first_string(data.get('taskType')),
+        }
+        link, created = BridgeProjectLink.objects.get_or_create(project=project)
+        update_fields = []
+        for field, value in values.items():
+            if value is not None and getattr(link, field) != value:
+                setattr(link, field, value)
+                update_fields.append(field)
+        if update_fields:
+            link.save(update_fields=update_fields)
+        return Response(
+            {'runtimeProjectId': str(project.id), 'linked': True},
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
 
 

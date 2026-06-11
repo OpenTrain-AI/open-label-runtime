@@ -55,11 +55,36 @@ def test_provision_creates_project_link_and_webhook(signing_env, org_with_projec
     assert link.opentrain_assessment_id == 'assess-9'
     assert link.task_type == 'image_bbox'
 
-    webhook = Webhook.objects.get(project=project)
+    # The control-plane webhook lives at the organization level so that
+    # organization-only actions (PROJECT_CREATED/PROJECT_DELETED) are delivered.
+    assert not Webhook.objects.filter(project=project).exists()
+    webhook = Webhook.objects.get(organization=project.organization, project__isnull=True)
     assert webhook.url == f'{CONTROL_PLANE_BASE}/api/webhooks/open-label'
     assert webhook.headers == {'x-open-label-secret': WEBHOOK_SECRET}
     assert webhook.send_payload is True
     assert webhook.send_for_all_actions is True
+
+
+@pytest.mark.django_db
+def test_provision_twice_keeps_single_org_webhook(signing_env, org_with_project):
+    _, _, owner = org_with_project
+    first = post_provision(owner, CONTROL_PLANE_PAYLOAD)
+    second = post_provision(owner, dict(CONTROL_PLANE_PAYLOAD, projectId='olp-10'))
+    assert first.status_code == 201
+    assert second.status_code == 201
+    organization_id = Project.objects.get(id=int(first.json()['runtimeProjectId'])).organization_id
+    assert Webhook.objects.filter(organization_id=organization_id, project__isnull=True).count() == 1
+
+
+@pytest.mark.django_db
+def test_provision_uses_provided_title_and_description(signing_env, org_with_project):
+    _, _, owner = org_with_project
+    payload = dict(CONTROL_PLANE_PAYLOAD, title='Street Scene Boxes', description='Boxes around cars.')
+    response = post_provision(owner, payload)
+    assert response.status_code == 201
+    project = Project.objects.get(id=int(response.json()['runtimeProjectId']))
+    assert project.title == 'Street Scene Boxes'
+    assert project.description == 'Boxes around cars.'
 
 
 @pytest.mark.django_db
@@ -103,8 +128,7 @@ def test_provision_without_webhook_base_skips_webhook(org_with_project, monkeypa
     _, _, owner = org_with_project
     response = post_provision(owner, CONTROL_PLANE_PAYLOAD)
     assert response.status_code == 201
-    project_id = int(response.json()['runtimeProjectId'])
-    assert not Webhook.objects.filter(project_id=project_id).exists()
+    assert not Webhook.objects.exists()
 
 
 @pytest.mark.django_db

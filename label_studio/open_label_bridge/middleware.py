@@ -10,6 +10,7 @@ webhook/member surfaces.
 """
 
 import logging
+import os
 import re
 
 from django.http import JsonResponse
@@ -162,6 +163,34 @@ class BridgeAccessMiddleware:
     def _deny(self, path):
         logger.info('open_label_bridge: blocked bridge session access to %s', path)
         return JsonResponse({'detail': 'Not available in this labeling session.'}, status=403)
+
+
+class BridgeFrameAncestorsMiddleware:
+    """Lets the OpenTrain app shell embed the runtime in an iframe.
+
+    Sets an enforced ``frame-ancestors`` CSP directive from the
+    OPEN_LABEL_FRAME_ANCESTORS env var (django-csp runs in report-only mode here)
+    and drops any Django-level X-Frame-Options header, which would override the
+    CSP allowance. Must be registered outermost so it runs last on responses.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        frame_ancestors = os.environ.get('OPEN_LABEL_FRAME_ANCESTORS', '').strip()
+        if not frame_ancestors:
+            return response
+        directive = f'frame-ancestors {frame_ancestors}'
+        existing = response.get('Content-Security-Policy')
+        if existing and 'frame-ancestors' not in existing:
+            response['Content-Security-Policy'] = f"{existing.rstrip().rstrip(';')}; {directive}"
+        elif not existing:
+            response['Content-Security-Policy'] = directive
+        if 'X-Frame-Options' in response:
+            del response['X-Frame-Options']
+        return response
 
 
 class BridgeActiveOrganizationMiddleware:

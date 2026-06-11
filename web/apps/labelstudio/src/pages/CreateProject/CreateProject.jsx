@@ -14,6 +14,7 @@ import { useImportPage } from "./Import/useImportPage";
 import { useDraftProject } from "./utils/useDraftProject";
 import { Input, TextArea } from "../../components/Form";
 import { FF_LSDV_E_297, isFF } from "../../utils/feature-flags";
+import { notifyEmbedParent } from "../../utils/embed";
 
 const ProjectName = ({ name, setName, onSaveName, onSubmit, error, description, setDescription, show = true }) =>
   !show ? null : (
@@ -163,6 +164,10 @@ export const CreateProject = ({ onClose }) => {
 
     setWaitingStatus(false);
 
+    // The webhook mirror is the source of truth; this only lets the OpenTrain
+    // shell refresh its project list immediately.
+    notifyEmbedParent({ type: "open-label:project-created", projectId: response.id, title: response.title ?? name });
+
     history.push(`/projects/${response.id}/data`);
   }, [project, projectBody, finishUpload]);
 
@@ -194,6 +199,7 @@ export const CreateProject = ({ onClose }) => {
         });
       setWaitingStatus(false);
       updateProject(null);
+      notifyEmbedParent({ type: "open-label:create-cancelled" });
       onClose?.();
     };
     performClose();

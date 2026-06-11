@@ -93,8 +93,8 @@ def test_project_create_lands_in_tenant_organization(org_with_project, signing_e
     assert project.organization_id == link.organization_id
     assert project.organization_id != default_org.id
     assert project.created_by_id == link.organization.created_by_id
-    webhook = Webhook.objects.get(project=project)
-    assert webhook.organization_id == link.organization_id
+    webhook = Webhook.objects.get(organization_id=link.organization_id, project__isnull=True)
+    assert webhook.send_for_all_actions is True
 
 
 @pytest.mark.django_db

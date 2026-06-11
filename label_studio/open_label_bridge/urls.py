@@ -13,6 +13,16 @@ urlpatterns = [
     ),
     path('open-label/bridge/projects', views.BridgeProjectCreateAPI.as_view(), name='open-label-bridge-projects'),
     path(
+        'open-label/bridge/projects/<int:project_id>',
+        views.BridgeProjectUpdateAPI.as_view(),
+        name='open-label-bridge-project-update',
+    ),
+    path(
+        'open-label/bridge/projects/<int:project_id>/link',
+        views.BridgeProjectLinkAPI.as_view(),
+        name='open-label-bridge-project-link',
+    ),
+    path(
         'open-label/bridge/projects/<int:project_id>/organization',
         views.BridgeProjectMoveAPI.as_view(),
         name='open-label-bridge-project-move',
