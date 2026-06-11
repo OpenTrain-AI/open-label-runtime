@@ -28,6 +28,11 @@ MIDDLEWARE.insert(0, 'open_label_bridge.middleware.BridgeFrameAncestorsMiddlewar
 # Project webhook payloads carry the OpenTrain linkage so the control plane can
 # mirror runtime-created projects without extra lookups.
 WEBHOOK_SERIALIZERS['project'] = 'open_label_bridge.serializers.OpenLabelProjectWebhookSerializer'
+# Annotation webhook payloads identify the annotator as an OpenTrain user id
+# (via BridgeIdentity) for the control-plane work ledger.
+WEBHOOK_SERIALIZERS['annotation'] = (
+    'open_label_bridge.serializers.OpenLabelAnnotationWebhookSerializer'
+)
 
 ADD_DEFAULT_ML_BACKENDS = False
 
