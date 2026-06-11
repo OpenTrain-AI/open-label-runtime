@@ -30,7 +30,6 @@ CANDIDATE_BLOCKED_PATTERNS = [
     re.compile(r'^/api/webhooks'),
     re.compile(r'^/api/invite'),
     re.compile(r'^/api/organizations'),
-    re.compile(r'^/api/users'),
     re.compile(r'^/api/current-user/(token|reset-token)'),
     re.compile(r'^/api/projects/\d+/exports?'),
     re.compile(r'^/api/projects/\d+/file-uploads'),
@@ -39,8 +38,12 @@ CANDIDATE_BLOCKED_PATTERNS = [
     re.compile(r'^/organization'),
 ]
 
+# The Data Manager's user fetch needs read access to the org-scoped /api/users
+# list (it only contains the tenant's own shadow users), so users are blocked
+# for writes rather than outright.
 CANDIDATE_BLOCKED_WRITE_PATTERNS = [
     re.compile(r'^/api/projects/\d+/?$'),
+    re.compile(r'^/api/users'),
 ]
 
 # Blocked for EVERY bridge session (candidate and employer_review alike):

@@ -78,6 +78,11 @@ def test_labeler_blocked_surfaces(signing_env, org_with_project):
     assert client.get(f'/api/projects/{other_project.id}/').status_code == 403
     assert client.patch(f'/api/projects/{project.id}/', data='{}', content_type='application/json').status_code == 403
 
+    # The Data Manager needs the org-scoped user list to render annotators,
+    # so reads pass while writes stay blocked.
+    assert client.get('/api/users/').status_code == 200
+    assert client.post('/api/users/', data='{}', content_type='application/json').status_code == 403
+
 
 @pytest.mark.django_db
 @responses.activate
