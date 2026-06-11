@@ -1,21 +1,21 @@
 @font-face {
-  font-family: Figtree;
-  src: url("/static/fonts/Figtree-Regular.ttf") format("truetype");
+  font-family: Inter;
+  src: url("/static/fonts/Inter-Regular.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: Figtree;
-  src: url("/static/fonts/Figtree-SemiBold.ttf") format("truetype");
+  font-family: Inter;
+  src: url("/static/fonts/Inter-SemiBold.ttf") format("truetype");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 
 body {
-  --font-sans: "Figtree", sans-serif !important;
+  --font-sans: "Inter", sans-serif !important;
   --font-mono: monaco, monospace !important;
   --font-weight-400: 400;
   --font-weight-500: 500;

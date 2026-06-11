@@ -57,7 +57,8 @@ STALE_FEATURE_FLAGS = {
     'fflag_feat_front_optic_1479_improve_image_tag_memory_usage_short': True,
     'ff_front_optic_1494_saved_templates_to_custom_templates': True,
     'fflag_feat_all_optic_1354_sum_annotation_region_count_short': True,
-    'fflag_feat_front_optic_1217_theme_toggle_short': True,
+    # Open Label is light-only to match OpenTrain; the neutral brand palette has no dark ramp.
+    'fflag_feat_front_optic_1217_theme_toggle_short': False,
     'feat_optic_1098_annotation_history_lead_time_charts': True,
     # Jan 6
     'fflag_root_223_optimize_delete_predictions': True,

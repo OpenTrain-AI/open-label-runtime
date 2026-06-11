@@ -3,27 +3,27 @@ html {
 }
 
 :root {
-  --font-sans: 'Figtree', sans-serif !important;
+  --font-sans: 'Inter', sans-serif !important;
   --font-mono: Monaco, monospace;
 
   /* Deprecated: [DO NOT USE] */
-  --sand_900: #12110D;
-  --sand_800: #262522;
-  --sand_700: #45433E;
-  --sand_600: #6B6860;
-  --sand_500: #A49F95;
-  --sand_400: #CAC5B8;
-  --sand_300: #E1DED5;
-  --sand_200: #F0EFEB;
-  --sand_100: #F9F8F6;
-  --sand_0: #FDFDFC;
+  --sand_900: #181D27;
+  --sand_800: #252B37;
+  --sand_700: #414651;
+  --sand_600: #717680;
+  --sand_500: #A4A7AE;
+  --sand_400: #D5D7DA;
+  --sand_300: #E9EAEB;
+  --sand_200: #F5F5F5;
+  --sand_100: #FAFAFA;
+  --sand_0: #FFFFFF;
 
-  --grape_0: #F0F3FE;
-  --grape_100: #D4DBFB; 
-  --grape_500: #566FCF;
-  --grape_600: #576CC1;
-  --grape_700: #4C5FA9;
-  --grape_800: #37447A;
+  --grape_0: #FFFFFF;
+  --grape_100: #E9EAEB; 
+  --grape_500: #535862;
+  --grape_600: #252B37;
+  --grape_700: #181D27;
+  --grape_800: #0A0D12;
 
   --kale_0: #F4F9F9;
   --kale_400: #57B7AB;

@@ -14,7 +14,7 @@
   color: var(--color-neutral-content);
 
   /* headline/medium */
-  font-family: var(--font-family-headings, Figtree);
+  font-family: var(--font-family-headings, Inter);
   font-size: var(--font-size-headline-medium, 28px);
   font-style: normal;
   font-weight: var(--font-weight-medium, 500);
@@ -27,7 +27,7 @@
   color: var(--color-neutral-content-subtler);
 
   /* title/medium */
-  font-family: var(--font-family-headings, Figtree);
+  font-family: var(--font-family-headings, Inter);
   font-size: var(--font-size-title-medium, 16px);
   font-style: normal;
   line-height: var(--line-height-title-medium, 24px); /* 150% */

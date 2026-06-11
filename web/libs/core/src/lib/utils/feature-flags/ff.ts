@@ -12,7 +12,9 @@ const FLAGS_OVERRIDE: Record<string, boolean> = {
   // Add your flags overrides as following:
   // [FF_FLAG_NAME]: boolean
   [FF_NEW_STORAGES]: true,
-  [FF_THEME_TOGGLE]: true,
+  // Open Label embeds inside OpenTrain, which is light-only; the neutral brand
+  // palette has no dark-mode ramp, so the theme toggle stays off.
+  [FF_THEME_TOGGLE]: false,
 };
 
 /**
