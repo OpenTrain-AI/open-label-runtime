@@ -67,6 +67,7 @@ def test_annotations_maps_bridge_identity_to_opentrain_user(org_with_project, dj
     assert annotation_payload['result'] == [{'value': {'choices': ['Positive']}}]
     assert annotation_payload['completedByOpenTrainUserId'] == 'ot-user-42'
     assert annotation_payload['wasCancelled'] is False
+    assert annotation_payload['groundTruth'] is False
     assert annotation_payload['leadTimeSeconds'] == 12.5
     assert annotation_payload['createdAt']
     assert annotation_payload['updatedAt']
@@ -84,6 +85,7 @@ def test_annotations_without_bridge_identity_reports_null_annotator(org_with_pro
         completed_by=runtime_only,
         result=[],
         was_cancelled=True,
+        ground_truth=True,
     )
 
     response = get_annotations(owner, project.id)
@@ -91,6 +93,7 @@ def test_annotations_without_bridge_identity_reports_null_annotator(org_with_pro
     annotation_payload = response.json()['tasks'][0]['annotations'][0]
     assert annotation_payload['completedByOpenTrainUserId'] is None
     assert annotation_payload['wasCancelled'] is True
+    assert annotation_payload['groundTruth'] is True
 
 
 @pytest.mark.django_db

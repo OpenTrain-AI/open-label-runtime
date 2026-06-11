@@ -452,6 +452,7 @@ class BridgeProjectAnnotationsAPI(APIView):
                             'runtimeAnnotationId': str(annotation.id),
                             'result': annotation.result,
                             'wasCancelled': bool(annotation.was_cancelled),
+                            'groundTruth': bool(annotation.ground_truth),
                             'leadTimeSeconds': annotation.lead_time,
                             'createdAt': _isoformat(annotation.created_at),
                             'updatedAt': _isoformat(annotation.updated_at),

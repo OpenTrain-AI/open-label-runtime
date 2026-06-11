@@ -58,6 +58,11 @@ def test_missing_required_field(signing_env, field):
     assert exc.value.reason == 'invalid_payload'
 
 
+def test_reviewer_role_accepted(signing_env):
+    payload = launch_payload(None, actorRole='reviewer')
+    assert verify_launch_token(make_token(payload)) == payload
+
+
 def test_invalid_role(signing_env):
     payload = launch_payload(None, actorRole='admin')
     with pytest.raises(BridgeTokenError) as exc:

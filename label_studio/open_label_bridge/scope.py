@@ -7,7 +7,9 @@ see tasks inside that scope — querysets are narrowed centrally and task-level
 API access is verified against the same rules.
 """
 
-RESTRICTED_BRIDGE_ROLES = ('candidate', 'labeler')
+# Reviewers are externally hired QA workers: project-restricted like labelers,
+# but they see the whole project's tasks unless a narrower scope is launched.
+RESTRICTED_BRIDGE_ROLES = ('candidate', 'labeler', 'reviewer')
 SCOPE_TASK_ID_LIMIT = 5000
 
 

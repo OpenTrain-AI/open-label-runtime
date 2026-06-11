@@ -48,6 +48,32 @@ def test_employer_review_landing(signing_env, org_with_project):
 
 @pytest.mark.django_db
 @responses.activate
+def test_reviewer_landing_and_restrictions(signing_env, org_with_project):
+    organization, project, owner = org_with_project
+    from projects.models import Project
+
+    other_project = Project.objects.create(
+        title='Other Project', label_config='<View></View>', organization=organization, created_by=owner
+    )
+    mock_consume()
+    token = make_token(launch_payload(project, actorRole='reviewer', actorUserId='ot-qa-1', nonce='nonce-reviewer'))
+
+    client = Client()
+    response = client.get('/open-label/launch', {'session': token})
+    assert response.status_code == 302
+    assert response['Location'] == f'/projects/{project.id}/data'
+
+    bridge = client.session.get('open_label_bridge')
+    assert bridge['role'] == 'reviewer'
+    assert bridge['projectId'] == project.id
+
+    assert client.get('/api/webhooks/').status_code == 403
+    assert client.get(f'/api/projects/{project.id}/export').status_code == 403
+    assert client.get(f'/api/projects/{other_project.id}/').status_code == 403
+
+
+@pytest.mark.django_db
+@responses.activate
 def test_replay_rejected(signing_env, org_with_project):
     _, project, _ = org_with_project
     mock_consume()
