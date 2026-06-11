@@ -1008,6 +1008,12 @@
         "decorators": ""
     },
     {
+        "url": "/data/local-files/",
+        "module": "io_storages.localfiles.views.localfiles_data",
+        "name": "storages:localfiles_data",
+        "decorators": ""
+    },
+    {
         "url": "/api/ml/",
         "module": "ml.api.MLBackendListAPI",
         "name": "ml:api:ml-list",
@@ -1140,9 +1146,51 @@
         "decorators": ""
     },
     {
-        "url": "/data/local-files/",
-        "module": "io_storages.localfiles.views.localfiles_data",
-        "name": "storages:localfiles_data",
+        "url": "/open-label/launch",
+        "module": "open_label_bridge.views.launch",
+        "name": "open_label_bridge:open-label-launch",
+        "decorators": ""
+    },
+    {
+        "url": "/open-label/bridge/organizations",
+        "module": "open_label_bridge.views.BridgeOrganizationCreateAPI",
+        "name": "open_label_bridge:open-label-bridge-organizations",
+        "decorators": ""
+    },
+    {
+        "url": "/open-label/bridge/projects",
+        "module": "open_label_bridge.views.BridgeProjectCreateAPI",
+        "name": "open_label_bridge:open-label-bridge-projects",
+        "decorators": ""
+    },
+    {
+        "url": "/open-label/bridge/projects/<int:project_id>",
+        "module": "open_label_bridge.views.BridgeProjectUpdateAPI",
+        "name": "open_label_bridge:open-label-bridge-project-update",
+        "decorators": ""
+    },
+    {
+        "url": "/open-label/bridge/projects/<int:project_id>/link",
+        "module": "open_label_bridge.views.BridgeProjectLinkAPI",
+        "name": "open_label_bridge:open-label-bridge-project-link",
+        "decorators": ""
+    },
+    {
+        "url": "/open-label/bridge/projects/<int:project_id>/organization",
+        "module": "open_label_bridge.views.BridgeProjectMoveAPI",
+        "name": "open_label_bridge:open-label-bridge-project-move",
+        "decorators": ""
+    },
+    {
+        "url": "/open-label/bridge/projects/<int:project_id>/tasks",
+        "module": "open_label_bridge.views.BridgeTaskBatchCreateAPI",
+        "name": "open_label_bridge:open-label-bridge-project-tasks",
+        "decorators": ""
+    },
+    {
+        "url": "/open-label/bridge/projects/<int:project_id>/annotations",
+        "module": "open_label_bridge.views.BridgeProjectAnnotationsAPI",
+        "name": "open_label_bridge:open-label-bridge-project-annotations",
         "decorators": ""
     },
     {
