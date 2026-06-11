@@ -22,4 +22,9 @@ urlpatterns = [
         views.BridgeTaskBatchCreateAPI.as_view(),
         name='open-label-bridge-project-tasks',
     ),
+    path(
+        'open-label/bridge/projects/<int:project_id>/annotations',
+        views.BridgeProjectAnnotationsAPI.as_view(),
+        name='open-label-bridge-project-annotations',
+    ),
 ]
