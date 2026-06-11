@@ -4,6 +4,7 @@ import { Userpic } from "@humansignal/ui";
 import { Pagination, Spinner } from "../../../components";
 import { usePage, usePageSize } from "../../../components/Pagination/Pagination";
 import { useAPI } from "../../../providers/ApiProvider";
+import { useConfig } from "../../../providers/ConfigProvider";
 import { cn } from "../../../utils/bem";
 import { isDefined } from "../../../utils/helpers";
 import "./PeopleList.prefix.css";
@@ -11,26 +12,36 @@ import { CopyableTooltip } from "../../../components/CopyableTooltip/CopyableToo
 
 export const PeopleList = ({ onSelect, selectedUser, defaultSelected }) => {
   const api = useAPI();
+  const config = useConfig();
+  // Tenant runtime orgs mean the current user is rarely in org 1, so the
+  // stock hardcoded pk of 1 404s — resolve the org from the session user.
+  const organizationId = config?.user?.active_organization ?? 1;
   const [usersList, setUsersList] = useState();
   const [currentPage] = usePage("page", 1);
   const [currentPageSize] = usePageSize("page_size", 30);
   const [totalItems, setTotalItems] = useState(0);
 
-  const fetchUsers = useCallback(async (page, pageSize) => {
-    const response = await api.callApi("memberships", {
-      params: {
-        pk: 1,
-        contributed_to_projects: 1,
-        page,
-        page_size: pageSize,
-      },
-    });
+  const fetchUsers = useCallback(
+    async (page, pageSize) => {
+      const response = await api.callApi("memberships", {
+        params: {
+          pk: organizationId,
+          contributed_to_projects: 1,
+          page,
+          page_size: pageSize,
+        },
+      });
 
-    if (response.results) {
-      setUsersList(response.results);
-      setTotalItems(response.count);
-    }
-  }, []);
+      if (response?.results) {
+        setUsersList(response.results);
+        setTotalItems(response.count);
+      } else {
+        setUsersList([]);
+        setTotalItems(0);
+      }
+    },
+    [organizationId],
+  );
 
   const selectUser = useCallback(
     (user) => {
