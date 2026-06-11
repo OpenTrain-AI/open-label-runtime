@@ -53,14 +53,19 @@ def consume_nonce(payload):
 
     body = json.dumps({'sessionId': payload['sessionId'], 'nonceHash': nonce_hash}, separators=(',', ':'))
     signature = hmac.new(get_signing_secret().encode('utf-8'), body.encode('utf-8'), hashlib.sha256).hexdigest()
+    headers = {
+        'content-type': 'application/json',
+        'x-open-label-signature': f'sha256={signature}',
+    }
+    bypass_token = os.environ.get('OPEN_LABEL_CONTROL_PLANE_BYPASS_TOKEN', '').strip()
+    if bypass_token:
+        # Vercel deployment-protection bypass for preview control planes
+        headers['x-vercel-protection-bypass'] = bypass_token
     try:
         response = requests.post(
             f'{base_url}/api/open-label/runtime-sessions/consume',
             data=body,
-            headers={
-                'content-type': 'application/json',
-                'x-open-label-signature': f'sha256={signature}',
-            },
+            headers=headers,
             timeout=CONSUME_TIMEOUT_SECONDS,
         )
     except requests.RequestException as exc:

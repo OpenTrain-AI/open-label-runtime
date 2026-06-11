@@ -62,6 +62,11 @@ def run_webhook_sync(webhook, action, payload=None):
         if signing_secret:
             signature = hmac.new(signing_secret.encode('utf-8'), body.encode('utf-8'), hashlib.sha256).hexdigest()
             headers['x-open-label-signature'] = f'sha256={signature}'
+        bypass_token = os.environ.get('OPEN_LABEL_CONTROL_PLANE_BYPASS_TOKEN', '').strip()
+        control_plane = os.environ.get('OPEN_LABEL_CONTROL_PLANE_BASE_URL', '').strip().rstrip('/')
+        if bypass_token and control_plane and webhook.url.startswith(control_plane):
+            # Vercel deployment-protection bypass; only sent to our own control plane
+            headers['x-vercel-protection-bypass'] = bypass_token
         return requests.post(
             webhook.url,
             headers=headers,
