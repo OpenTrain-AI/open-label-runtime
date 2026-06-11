@@ -6,7 +6,6 @@ import { IconCheck, IconEllipsis, IconMinus, IconSparks } from "@humansignal/ico
 import { Userpic, Button, Dropdown, Tooltip } from "@humansignal/ui";
 import { Menu, Pagination } from "../../components";
 import { cn } from "../../utils/bem";
-import { absoluteURL } from "../../utils/helpers";
 import { ProjectStateChip } from "@humansignal/app-common";
 
 const DEFAULT_CARD_COLORS = ["#FFFFFF", "#FDFDFC"];
@@ -38,11 +37,6 @@ export const ProjectsList = ({ projects, currentPage, totalItems, loadNextPage, 
 export const EmptyProjectsList = ({ openModal }) => {
   return (
     <div className={cn("empty-projects-page").toClassName()}>
-      <img
-        alt="Open Label empty projects illustration"
-        className={cn("empty-projects-page").elem("heidi").toClassName()}
-        src={absoluteURL("/static/images/opossum_looking.png")}
-      />
       <h1 className={cn("empty-projects-page").elem("header").toClassName()}>No Open Label projects yet.</h1>
       <p>Create your first project to start candidate attempts and review.</p>
       <Button onClick={openModal} className="my-8" aria-label="Create new project">

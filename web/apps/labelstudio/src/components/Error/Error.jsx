@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useMemo, useState } from "react";
 import sanitizeHtml from "sanitize-html";
 import { cn } from "../../utils/bem";
-import { absoluteURL, copyText } from "../../utils/helpers";
+import { copyText } from "../../utils/helpers";
 import { Button } from "@humansignal/ui";
 import { Space } from "../Space/Space";
 import "./Error.prefix.css";
@@ -17,7 +17,6 @@ export const ErrorWrapper = ({
   version,
   onGoBack,
   onReload,
-  possum = false,
   minimal = false,
 }) => {
   const preparedStackTrace = useMemo(() => {
@@ -34,15 +33,6 @@ export const ErrorWrapper = ({
 
   return (
     <div className={cn("error-message").toClassName()}>
-      {!minimal && possum !== false && (
-        <img
-          className={cn("error-message").elem("heidi").toClassName()}
-          src={absoluteURL("/static/images/opossum_broken.svg")}
-          height="111"
-          alt="Open Label error illustration"
-        />
-      )}
-
       {!minimal && title && <div className={cn("error-message").elem("title").toClassName()}>{title}</div>}
 
       {!minimal && message && (

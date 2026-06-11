@@ -48,13 +48,7 @@ const loadAsyncPage = async (url) => {
     return html;
   } catch (err) {
     modal({
-      body: () => (
-        <ErrorWrapper
-          possum={false}
-          title={"Connection refused"}
-          message={"Server not responding. Is it still running?"}
-        />
-      ),
+      body: () => <ErrorWrapper title={"Connection refused"} message={"Server not responding. Is it still running?"} />,
       simple: true,
       allowClose: false,
       style: { width: 680 },

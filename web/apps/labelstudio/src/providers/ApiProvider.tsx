@@ -48,11 +48,7 @@ const displayErrorModal = (errorDetails: FormattedError) => {
     unique: "network-error",
     allowClose: !isShutdown,
     body: isShutdown ? (
-      <ErrorWrapper
-        possum={false}
-        title={"Connection refused"}
-        message={"Server not responding. Is it still running?"}
-      />
+      <ErrorWrapper title={"Connection refused"} message={"Server not responding. Is it still running?"} />
     ) : (
       <ErrorWrapper
         {...formattedError}
