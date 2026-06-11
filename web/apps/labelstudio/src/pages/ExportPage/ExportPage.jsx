@@ -24,7 +24,6 @@ const LARGE_EXPORT_TASK_THRESHOLD = 1000;
 const EXPORT_TIMEOUT_DOCS_URL = "https://labelstud.io/guide/export.html#Export-timeout-in-Community-Edition";
 const EXPORT_CONSOLE_DOCS_URL = "https://labelstud.io/guide/export.html#Export-using-console-command";
 const EXPORT_SNAPSHOT_SDK_URL = "https://api.labelstud.io/api-reference/api-reference/projects/exports/create";
-const ENTERPRISE_URL = "https://docs.humansignal.com/guide/label_studio_compare";
 
 // const formats = {
 //   json: 'JSON',
@@ -256,23 +255,6 @@ const FormatInfo = ({ availableFormats, selected, onClick }) => {
           </div>
         ))}
       </div>
-      <div className={cn("formats").elem("feedback").toClassName()}>
-        Can't find an export format?
-        <br />
-        Please let us know in{" "}
-        <a className="no-go" href="https://slack.labelstud.io/?source=product-export" target="_blank" rel="noreferrer">
-          Slack
-        </a>{" "}
-        or submit an issue to the{" "}
-        <a
-          className="no-go"
-          href="https://github.com/HumanSignal/label-studio-converter/issues"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Repository
-        </a>
-      </div>
     </div>
   );
 };
@@ -289,15 +271,11 @@ const ExportLargeProjectWarning = ({ taskCount }) => {
         Large project detected ({taskCount.toLocaleString()} tasks)
       </div>
       <div className={cn("export-page").elem("warning-body").toClassName()}>
-        To avoid potential timeouts during large dataset exports in the Community Edition, use the{" "}
+        To avoid potential timeouts during large dataset exports, use the{" "}
         <a className="no-go" href={EXPORT_TIMEOUT_DOCS_URL} target="_blank" rel="noreferrer">
           CLI/SDK export options
-        </a>{" "}
-        or consider{" "}
-        <a className="no-go" href={ENTERPRISE_URL} target="_blank" rel="noreferrer">
-          Enterprise
-        </a>{" "}
-        for background exports at scale.
+        </a>
+        .
       </div>
     </div>
   );
@@ -320,8 +298,8 @@ const ExportTimeoutGuidance = ({ projectId, exportType }) => {
         <div className={cn("export-page").elem("timeout-title").toClassName()}>Export timed out</div>
       </div>
       <div className={cn("export-page").elem("timeout-body").toClassName()}>
-        This export is processed synchronously in the Community Edition UI and can exceed typical reverse-proxy timeouts
-        (often around 90 seconds) for large datasets.
+        This export is processed synchronously in the UI and can exceed typical reverse-proxy timeouts (often around 90
+        seconds) for large datasets.
       </div>
 
       <div className={cn("export-page").elem("timeout-actions").toClassName()}>
@@ -372,26 +350,13 @@ const ExportTimeoutGuidance = ({ projectId, exportType }) => {
               </div>
             </div>
           </li>
-          <li>
-            <div className={cn("export-page").elem("timeout-action-item").toClassName()}>
-              <IconWarningCircleFilled className={cn("export-page").elem("timeout-action-icon").toClassName()} />
-              <div className={cn("export-page").elem("timeout-action-content").toClassName()}>
-                For large-scale exports in the UI, consider{" "}
-                <a className="no-go" href={ENTERPRISE_URL} target="_blank" rel="noreferrer">
-                  Label Studio Enterprise
-                  <IconExternal className={cn("export-page").elem("timeout-link-icon").toClassName()} />
-                </a>{" "}
-                since it is designed for large-scale projects and asynchronous exports.
-              </div>
-            </div>
-          </li>
         </ul>
         <div className={cn("export-page").elem("timeout-footer").toClassName()}>
           <IconBook className={cn("export-page").elem("timeout-footer-icon").toClassName()} />
           <span>
             More details in the documentation:{" "}
             <a className="no-go" href={EXPORT_TIMEOUT_DOCS_URL} target="_blank" rel="noreferrer">
-              Export timeout in Community Edition
+              Export timeouts
               <IconExternal className={cn("export-page").elem("timeout-link-icon").toClassName()} />
             </a>
           </span>

@@ -389,8 +389,8 @@ RQ_FAILED_JOB_TTL = int(get_env('RQ_FAILED_JOB_TTL', 30 * 24 * 60 * 60))
 
 # drf-spectacular settings for OpenAPI 3.0 schema generation
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Label Studio API',
-    'DESCRIPTION': 'Label Studio API for data annotation and labeling',
+    'TITLE': 'Open Label API',
+    'DESCRIPTION': 'Open Label API for data annotation and labeling',
     'VERSION': '',
     'SERVE_INCLUDE_SCHEMA': False,
     'COMPONENT_SPLIT_REQUEST': True,
@@ -407,7 +407,7 @@ SPECTACULAR_SETTINGS = {
     'SERVERS': [
         {
             'url': HOSTNAME,
-            'description': 'Label Studio',
+            'description': 'Open Label',
         },
     ],
     'CONTACT': {'url': 'https://labelstud.io'},
@@ -553,7 +553,7 @@ RANDOM_NEXT_TASK_SAMPLE_SIZE = int(get_env('RANDOM_NEXT_TASK_SAMPLE_SIZE', 50))
 TASK_API_PAGE_SIZE_MAX = int(get_env('TASK_API_PAGE_SIZE_MAX', 0)) or None
 
 # Email backend
-FROM_EMAIL = get_env('FROM_EMAIL', 'Label Studio <hello@labelstud.io>')
+FROM_EMAIL = get_env('FROM_EMAIL', 'Open Label <no-reply@opentrain.ai>')
 EMAIL_BACKEND = get_env('EMAIL_BACKEND', 'django.core.mail.backends.dummy.EmailBackend')
 
 ENABLE_LOCAL_FILES_STORAGE = get_bool_env('ENABLE_LOCAL_FILES_STORAGE', default=True)
