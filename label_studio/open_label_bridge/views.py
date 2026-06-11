@@ -220,6 +220,9 @@ class BridgeProjectCreateAPI(APIView):
             webhook_secret = os.environ.get('OPEN_LABEL_WEBHOOK_SECRET', '').strip()
             if webhook_secret:
                 headers['x-open-label-secret'] = webhook_secret
+            bypass_token = os.environ.get('OPEN_LABEL_CONTROL_PLANE_BYPASS_TOKEN', '').strip()
+            if bypass_token:
+                headers['x-vercel-protection-bypass'] = bypass_token
             Webhook.objects.create(
                 organization=organization,
                 project=project,
