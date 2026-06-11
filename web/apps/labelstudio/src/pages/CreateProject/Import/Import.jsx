@@ -504,7 +504,7 @@ export const ImportPage = ({
                           >
                             multi-image labeling
                           </a>
-                          . JSONL or Parquet (Enterprise only) files require cloud storage.
+                          . JSONL or Parquet files require cloud storage.
                         </li>
                         <li>
                           Need to bring in preannotated data?{" "}

@@ -193,11 +193,7 @@ export const HomePage: Page = () => {
           </SimpleCard>
         </section>
         <section className="flex flex-col gap-6">
-          <SimpleCard
-            title="Resources"
-            description="OpenTrain resources and support"
-            data-testid="resources-card"
-          >
+          <SimpleCard title="Resources" description="OpenTrain resources and support" data-testid="resources-card">
             <ul>
               {resources.map((link) => {
                 return (

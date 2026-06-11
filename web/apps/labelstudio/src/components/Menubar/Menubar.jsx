@@ -13,7 +13,6 @@ import {
 } from "@humansignal/icons";
 import { LSLogo } from "../../assets/images";
 import { Button, Userpic, ThemeToggle } from "@humansignal/ui";
-import { useConfig } from "../../providers/ConfigProvider";
 import { useContextComponent, useFixedLocation } from "../../providers/RoutesProvider";
 import { useAuth } from "@humansignal/core/providers/AuthProvider";
 import { cn } from "../../utils/bem";
@@ -58,7 +57,6 @@ export const Menubar = ({ enabled, defaultOpened, defaultPinned, children, onSid
   const { user, isLoading } = useAuth();
   const location = useFixedLocation();
 
-  const config = useConfig();
   const [sidebarOpened, setSidebarOpened] = useState(defaultOpened ?? false);
   const [sidebarPinned, setSidebarPinned] = useState(defaultPinned ?? false);
   const [PageContext, setPageContext] = useState({
@@ -229,8 +227,18 @@ export const Menubar = ({ enabled, defaultOpened, defaultPinned, children, onSid
 
                 <VersionNotifier showNewVersion />
 
-                <Menu.Item label="OpenTrain App" href="https://app.opentrain.ai" icon={<IconTerminal />} target="_blank" />
-                <Menu.Item label="Contact Support" href="mailto:support@opentrain.ai" icon={<IconBook />} target="_blank" />
+                <Menu.Item
+                  label="OpenTrain App"
+                  href="https://app.opentrain.ai"
+                  icon={<IconTerminal />}
+                  target="_blank"
+                />
+                <Menu.Item
+                  label="Contact Support"
+                  href="mailto:support@opentrain.ai"
+                  icon={<IconBook />}
+                  target="_blank"
+                />
 
                 <VersionNotifier showCurrentVersion />
 

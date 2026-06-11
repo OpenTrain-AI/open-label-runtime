@@ -89,7 +89,8 @@ export const humanReadableNumber = (n: number) => {
 };
 
 export const absoluteURL = (path = "") => {
-  if (path.match(/^https?/) || path.match(/^\/\//)) {
+  // Pass through anything that already has a scheme (https:, mailto:, etc.)
+  if (path.match(/^[a-z][a-z0-9+.-]*:/i) || path.match(/^\/\//)) {
     return path;
   }
   return [APP_SETTINGS.hostname.replace(/([/]+)$/, ""), path.replace(/^([/]+)/, "")].join("/");

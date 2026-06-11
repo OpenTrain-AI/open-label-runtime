@@ -3,10 +3,10 @@ import time
 
 from core.label_config import validate_label_config
 from django.contrib import auth
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views.decorators.http import require_GET
-from django.db import transaction
 from organizations.models import Organization
 from projects.models import Project
 from rest_framework import status

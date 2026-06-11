@@ -1,4 +1,3 @@
-import { EnterpriseBadge, Select, Typography } from "@humansignal/ui";
 import React from "react";
 import { useHistory } from "react-router";
 import { ToggleItems } from "../../components";
@@ -13,7 +12,6 @@ import { ImportPage } from "./Import/Import";
 import { useImportPage } from "./Import/useImportPage";
 import { useDraftProject } from "./utils/useDraftProject";
 import { Input, TextArea } from "../../components/Form";
-import { FF_LSDV_E_297, isFF } from "../../utils/feature-flags";
 import { notifyEmbedParent } from "../../utils/embed";
 
 const ProjectName = ({ name, setName, onSaveName, onSubmit, error, description, setDescription, show = true }) =>
@@ -54,38 +52,6 @@ const ProjectName = ({ name, setName, onSaveName, onSubmit, error, description, 
           className="project-description w-full"
         />
       </div>
-      {isFF(FF_LSDV_E_297) && (
-        <div className="w-full flex flex-col gap-2">
-          <label>
-            Workspace
-            <EnterpriseBadge className="ml-tight" />
-          </label>
-          <Select placeholder="Select an option" disabled options={[]} triggerClassName="!flex-1" />
-          <Typography size="small" className="mt-tight mb-wider">
-            Organize employer setup across dedicated Open Label workspaces.{" "}
-            <a
-              href="mailto:support@opentrain.ai"
-              target="_blank"
-              rel="noreferrer"
-              className="underline hover:no-underline"
-            >
-              Contact OpenTrain support
-            </a>
-          </Typography>
-          <div className="rounded-xl border border-neutral-border bg-neutral-background px-4 py-3">
-            <Typography size="small">
-              Open Label powers employer setup, candidate attempts, and review inside OpenTrain.
-            </Typography>
-            <Typography size="small" className="mt-2">
-              Need help choosing a template or configuring a workspace?{" "}
-              <a href="mailto:support@opentrain.ai" target="_blank" rel="noreferrer" className="underline hover:no-underline">
-                Email support@opentrain.ai
-              </a>
-              .
-            </Typography>
-          </div>
-        </div>
-      )}
     </form>
   );
 
