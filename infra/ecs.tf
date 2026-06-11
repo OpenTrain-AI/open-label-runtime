@@ -129,6 +129,7 @@ locals {
       "LABEL_STUDIO_USER_TOKEN",
       "OPEN_LABEL_WEBHOOK_SECRET",
       "OPEN_LABEL_SESSION_SIGNING_SECRET",
+      "OPEN_LABEL_CONTROL_PLANE_BYPASS_TOKEN",
     ] : {
       name      = key
       valueFrom = "arn:aws:ssm:${local.region}:${local.account_id}:parameter${local.ssm_prefix}/${key}"
