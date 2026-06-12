@@ -1,5 +1,4 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { StaticContent } from "../../app/StaticContent/StaticContent";
 import {
   IconBook,
   IconFolder,
@@ -13,12 +12,11 @@ import {
 } from "@humansignal/icons";
 import { LSLogo } from "../../assets/images";
 import { Button, Userpic, ThemeToggle } from "@humansignal/ui";
-import { useContextComponent, useFixedLocation } from "../../providers/RoutesProvider";
+import { useFixedLocation } from "../../providers/RoutesProvider";
 import { useAuth } from "@humansignal/core/providers/AuthProvider";
 import { displayableEmail, userDisplayName } from "@humansignal/core";
 import { cn } from "../../utils/bem";
 import { absoluteURL, isDefined } from "../../utils/helpers";
-import { Breadcrumbs } from "../Breadcrumbs/Breadcrumbs";
 import { Dropdown } from "@humansignal/ui";
 import { Hamburger } from "../Hamburger/Hamburger";
 import { Menu } from "../Menu/Menu";
@@ -31,26 +29,10 @@ import { pages } from "@humansignal/app-common";
 import { isFF } from "../../utils/feature-flags";
 import { ff } from "@humansignal/core";
 import { openHotkeyHelp } from "@humansignal/app-common/pages/AccountSettings/sections/Hotkeys/Help";
+import { LeftContextMenu, RightContextMenu } from "./ContextMenus";
+import { EmbedTopBar } from "./EmbedTopBar";
 
 export const MenubarContext = createContext();
-
-const LeftContextMenu = ({ className }) => (
-  <StaticContent id="context-menu-left" className={className}>
-    {(template) => <Breadcrumbs fromTemplate={template} />}
-  </StaticContent>
-);
-
-const RightContextMenu = ({ className, ...props }) => {
-  const { ContextComponent, contextProps } = useContextComponent();
-
-  return ContextComponent ? (
-    <div className={className}>
-      <ContextComponent {...props} {...(contextProps ?? {})} />
-    </div>
-  ) : (
-    <StaticContent id="context-menu-right" className={className} />
-  );
-};
 
 export const Menubar = ({
   enabled,
@@ -138,57 +120,55 @@ export const Menubar = ({
     useMenuRef?.current?.close();
   }, [location]);
 
-  // Embedded mode (OpenTrain shell iframe): keep the bar because it hosts
-  // breadcrumbs and per-page actions (e.g. the Create button on /projects),
-  // but drop the logo, sidebar and account chrome — the shell provides those.
-  const showMenubar = enabled || embedded;
-
+  // Embedded mode (OpenTrain shell iframe): the runtime renders the full app
+  // with a top tab bar (Home / Projects / Organization) plus breadcrumbs and
+  // per-page actions — no logo, sidebar, or account chrome; the shell owns those.
   return (
     <div className={contentClass}>
-      {showMenubar && (
-        <div className={menubarClass.mod({ embedded }).toClassName()}>
-          {!embedded && (
+      {embedded ? (
+        <EmbedTopBar />
+      ) : (
+        enabled && (
+          <div className={menubarClass.toClassName()}>
             <Dropdown.Trigger dropdown={menuDropdownRef} closeOnClickOutside={!sidebarPinned}>
               <div className={`${menubarClass.elem("trigger")} main-menu-trigger`}>
                 <LSLogo className={`${menubarClass.elem("logo")}`} alt="Open Label logo" />
                 <Hamburger opened={sidebarOpened} />
               </div>
             </Dropdown.Trigger>
-          )}
 
-          <div className={menubarContext}>
-            <LeftContextMenu className={contextItem.mod({ left: true }).toClassName()} />
-            <RightContextMenu className={contextItem.mod({ right: true }).toClassName()} />
-          </div>
-
-          <div className={menubarClass.elem("hotkeys").toClassName()}>
-            <div className={menubarClass.elem("hotkeys-button").toClassName()}>
-              <Button
-                variant="neutral"
-                look="outlined"
-                tooltip="Keyboard Shortcuts"
-                data-testid="hotkeys-button"
-                size="small"
-                onClick={() => {
-                  openHotkeyHelp([
-                    "annotation",
-                    "data_manager",
-                    "regions",
-                    "tools",
-                    "audio",
-                    "video",
-                    "timeseries",
-                    "image_gallery",
-                  ]);
-                }}
-                icon={<IconHotkeys />}
-              />
+            <div className={menubarContext}>
+              <LeftContextMenu className={contextItem.mod({ left: true }).toClassName()} />
+              <RightContextMenu className={contextItem.mod({ right: true }).toClassName()} />
             </div>
-          </div>
 
-          {!embedded && ff.isActive(ff.FF_THEME_TOGGLE) && <ThemeToggle />}
+            <div className={menubarClass.elem("hotkeys").toClassName()}>
+              <div className={menubarClass.elem("hotkeys-button").toClassName()}>
+                <Button
+                  variant="neutral"
+                  look="outlined"
+                  tooltip="Keyboard Shortcuts"
+                  data-testid="hotkeys-button"
+                  size="small"
+                  onClick={() => {
+                    openHotkeyHelp([
+                      "annotation",
+                      "data_manager",
+                      "regions",
+                      "tools",
+                      "audio",
+                      "video",
+                      "timeseries",
+                      "image_gallery",
+                    ]);
+                  }}
+                  icon={<IconHotkeys />}
+                />
+              </div>
+            </div>
 
-          {!embedded && (
+            {ff.isActive(ff.FF_THEME_TOGGLE) && <ThemeToggle />}
+
             <Dropdown.Trigger
               ref={useMenuRef}
               align="right"
@@ -224,8 +204,8 @@ export const Menubar = ({
                 {showNewsletterDot && <div className={menubarClass.elem("userpic-badge").toClassName()} />}
               </div>
             </Dropdown.Trigger>
-          )}
-        </div>
+          </div>
+        )
       )}
 
       <VersionProvider>
@@ -245,8 +225,6 @@ export const Menubar = ({
                 <Menu.Item label="Organization" to="/organization" icon={<IconPeople />} data-external exact />
 
                 <Menu.Spacer />
-
-                <VersionNotifier showNewVersion />
 
                 <Menu.Item
                   label="OpenTrain App"

@@ -232,6 +232,14 @@ class BridgeProjectCreateAPI(APIView):
 
         label_config = _extract_label_config(data.get('labelStudioConfig'))
         instructions = _first_string(data.get('instructions')) or ''
+        purpose = _first_string(data.get('purpose'))
+        if purpose is not None:
+            purpose = purpose.lower()
+            if purpose not in (Project.PURPOSE_SCREENING, Project.PURPOSE_PRODUCTION):
+                return Response(
+                    {'detail': "purpose must be 'screening' or 'production'"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         opentrain_organization_id = _extract_opentrain_organization_id(data)
         if opentrain_organization_id:
             organization, _ = ensure_runtime_organization(opentrain_organization_id)
@@ -257,6 +265,7 @@ class BridgeProjectCreateAPI(APIView):
                 expert_instruction=instructions,
                 organization=organization,
                 created_by=organization.created_by or request.user,
+                purpose=purpose,
             )
         except Exception as exc:
             logger.warning('open_label_bridge: project create failed: %s', exc)

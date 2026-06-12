@@ -7,8 +7,6 @@ const localFilesDocumentRoot =
   typeof window === "undefined" ? undefined : window.APP_SETTINGS?.local_files_document_root;
 const localFilesServingEnabled =
   typeof window === "undefined" ? true : window.APP_SETTINGS?.local_files_serving_enabled !== false;
-const isCommunityEdition =
-  typeof window === "undefined" ? false : window.APP_SETTINGS?.version?.edition === "Community";
 const trimTrailingSeparators = (value?: string) => value?.replace(/[/\\]+$/, "");
 const defaultPathExample = localFilesDocumentRoot
   ? `${trimTrailingSeparators(localFilesDocumentRoot)}/your-subdirectory`
@@ -20,34 +18,16 @@ const pathSchema = defaultPathExample
 
 const LocalFilesServingWarning = () => {
   if (localFilesServingEnabled) return null;
+  // The runtime is managed by OpenTrain; users cannot change server env vars,
+  // so direct them to support instead of upstream self-hosting docs.
   return (
-    <>
-      <Alert variant="destructive">
-        <AlertTitle>Local file serving is disabled</AlertTitle>
-        <AlertDescription>
-          Set the "LOCAL_FILES_SERVING_ENABLED" environment variable to "true" and restart Open Label to enable Local
-          Files storage. See the documentation for details:{" "}
-          <a href="https://labelstud.io/guide/storage.html#Local-storage" target="_blank" rel="noreferrer">
-            Local Storage documentation
-          </a>
-          {isCommunityEdition && (
-            <Alert variant="info">
-              <AlertDescription>
-                <p>
-                  Tip: Create a "mydata" or "label-studio-data" directory next to the command you use to run Label
-                  Studio and local file serving will be enabled automatically.
-                </p>
-                <p>
-                  If you run the Docker image, the app starts in "/label-studio", so you can bind-mount your host folder
-                  to "/label-studio/mydata" or "/label-studio/label-studio-data" inside the container to enable local
-                  file serving without extra configuration.
-                </p>
-              </AlertDescription>
-            </Alert>
-          )}
-        </AlertDescription>
-      </Alert>
-    </>
+    <Alert variant="destructive">
+      <AlertTitle>Local file serving is disabled</AlertTitle>
+      <AlertDescription>
+        Local Files storage is not enabled on this Open Label environment. If you need it,{" "}
+        <a href="mailto:support@opentrain.ai">contact OpenTrain support</a>.
+      </AlertDescription>
+    </Alert>
   );
 };
 

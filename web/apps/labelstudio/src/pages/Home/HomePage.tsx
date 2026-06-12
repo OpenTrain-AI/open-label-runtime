@@ -2,16 +2,15 @@ import { IconExternal, IconFolderAdd, IconUserAdd, IconFolderOpen } from "@human
 import { Button, SimpleCard, Spinner, Tooltip, Typography } from "@humansignal/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useHistory, useLocation } from "react-router-dom";
 import { useUpdatePageTitle } from "@humansignal/core";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useAPI } from "../../providers/ApiProvider";
+import { isEmbedded, notifyEmbedParent } from "../../utils/embed";
 import { CreateProject } from "../CreateProject/CreateProject";
-import { InviteLink } from "../Organization/PeoplePage/InviteLink";
 import type { Page } from "../types/Page";
 import {
   creationDialogOpen,
-  invitationOpen,
   locationKeyAtom,
   PROJECTS_TO_SHOW,
   projectsDataAtom,
@@ -20,7 +19,8 @@ import {
 } from "./atoms";
 
 const resources = [
-  {
+  // Inside the OpenTrain shell a link to the OpenTrain app is a dead-end loop.
+  !isEmbedded() && {
     title: "OpenTrain App",
     url: "https://app.opentrain.ai",
   },
@@ -28,7 +28,7 @@ const resources = [
     title: "Contact Support",
     url: "mailto:support@opentrain.ai",
   },
-];
+].filter(Boolean) as { title: string; url: string }[];
 
 const actions = [
   {
@@ -37,9 +37,9 @@ const actions = [
     type: "createProject",
   },
   {
-    title: "Invite Members",
+    title: "Manage Team",
     icon: IconUserAdd,
-    type: "inviteMembers",
+    type: "manageTeam",
   },
 ] as const;
 
@@ -48,8 +48,8 @@ type Action = (typeof actions)[number]["type"];
 export const HomePage: Page = () => {
   const api = useAPI();
   const location = useLocation();
+  const history = useHistory();
   const [modalIsOpen, setModalIsOpen] = useAtom(creationDialogOpen);
-  const [invitationIsOpen, setInvitationIsOpen] = useAtom(invitationOpen);
   const setLocationKey = useSetAtom(locationKeyAtom);
   const setProjectsData = useSetAtom(projectsDataAtom);
   const sortedProjects = useAtomValue(sortedProjectsAtom);
@@ -110,8 +110,15 @@ export const HomePage: Page = () => {
         case "createProject":
           setModalIsOpen(true);
           break;
-        case "inviteMembers":
-          setInvitationIsOpen(true);
+        case "manageTeam":
+          // Membership is managed natively in OpenTrain: in the shell, ask the
+          // parent app to open its team page; standalone, the Organization page
+          // explains where team access lives.
+          if (isEmbedded()) {
+            notifyEmbedParent({ type: "open-label:open-team" });
+          } else {
+            history.push("/organization");
+          }
           break;
       }
     };
@@ -221,7 +228,6 @@ export const HomePage: Page = () => {
         </section>
       </div>
       {modalIsOpen && <CreateProject onClose={() => setModalIsOpen(false)} />}
-      <InviteLink opened={invitationIsOpen} onClosed={() => setInvitationIsOpen(false)} />
     </main>
   );
 };

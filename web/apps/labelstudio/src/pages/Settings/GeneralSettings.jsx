@@ -19,6 +19,19 @@ export const GeneralSettings = () => {
     { value: "Uniform", label: "Random", description: "Tasks are chosen with uniform random" },
   ];
 
+  const purposes = [
+    {
+      value: "screening",
+      label: "Screening assessment",
+      description: "A small fixed task set; every applicant completes the same tasks",
+    },
+    {
+      value: "production",
+      label: "Production labeling",
+      description: "Real labeling work; tasks are distributed across your workers",
+    },
+  ];
+
   return (
     <div className={cn("general-settings").toClassName()}>
       <div className={cn("general-settings").elem("wrapper").toClassName()}>
@@ -45,6 +58,12 @@ export const GeneralSettings = () => {
                     label={`${label} sampling`}
                     description={description}
                   />
+                ))}
+              </RadioGroup>
+
+              <RadioGroup label="Project Purpose" labelProps={{ size: "large" }} name="purpose" simple>
+                {purposes.map(({ value, label, description }) => (
+                  <RadioGroup.Button key={value} value={value} label={label} description={description} />
                 ))}
               </RadioGroup>
             </Form.Row>

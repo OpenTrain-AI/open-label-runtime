@@ -282,6 +282,7 @@ class ProjectSerializer(FlexFieldsModelSerializer):
             'is_published',
             'model_version',
             'is_draft',
+            'purpose',
             'created_by',
             'created_at',
             'min_annotations_to_start_training',
