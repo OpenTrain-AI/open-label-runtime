@@ -1,3 +1,5 @@
+import { isBridgeManagedEmail } from "./bridge-users";
+
 export const isFlagEnabled = (id: string, flagList: Record<string, boolean>, defaultValue = false) => {
   if (id in flagList) {
     return flagList[id] ?? defaultValue;
@@ -19,21 +21,19 @@ export const isDefined = <T>(value: T | undefined | null): value is T => {
 
 export const userDisplayName = (user: Record<string, string> = {}) => {
   if (!user) return "";
-  let { firstName, lastName, first_name, last_name, username, email } = user;
+  const firstName = user.first_name || user.firstName;
+  const lastName = user.last_name || user.lastName;
+  const fullName = [firstName, lastName]
+    .filter((n) => !!n)
+    .join(" ")
+    .trim();
 
-  if (first_name) {
-    firstName = first_name;
-  }
-  if (last_name) {
-    lastName = last_name;
-  }
-
-  return firstName || lastName
-    ? [firstName, lastName]
-        .filter((n) => !!n)
-        .join(" ")
-        .trim()
-    : username || email || "";
+  if (fullName) return fullName;
+  // Bridge-managed accounts carry synthetic placeholder emails that must
+  // never surface in the UI.
+  if (user.username && !isBridgeManagedEmail(user.username)) return user.username;
+  if (user.email && !isBridgeManagedEmail(user.email)) return user.email;
+  return isBridgeManagedEmail(user.email) || isBridgeManagedEmail(user.username) ? "Member" : "";
 };
 
 export const copyText = async (text: string) => {

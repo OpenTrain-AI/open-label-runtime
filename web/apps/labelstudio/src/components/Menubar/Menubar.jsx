@@ -15,6 +15,7 @@ import { LSLogo } from "../../assets/images";
 import { Button, Userpic, ThemeToggle } from "@humansignal/ui";
 import { useContextComponent, useFixedLocation } from "../../providers/RoutesProvider";
 import { useAuth } from "@humansignal/core/providers/AuthProvider";
+import { displayableEmail, userDisplayName } from "@humansignal/core";
 import { cn } from "../../utils/bem";
 import { absoluteURL, isDefined } from "../../utils/helpers";
 import { Breadcrumbs } from "../Breadcrumbs/Breadcrumbs";
@@ -51,7 +52,15 @@ const RightContextMenu = ({ className, ...props }) => {
   );
 };
 
-export const Menubar = ({ enabled, defaultOpened, defaultPinned, children, onSidebarToggle, onSidebarPin }) => {
+export const Menubar = ({
+  enabled,
+  embedded = false,
+  defaultOpened,
+  defaultPinned,
+  children,
+  onSidebarToggle,
+  onSidebarPin,
+}) => {
   const menuDropdownRef = useRef();
   const useMenuRef = useRef();
   const { user, isLoading } = useAuth();
@@ -129,16 +138,23 @@ export const Menubar = ({ enabled, defaultOpened, defaultPinned, children, onSid
     useMenuRef?.current?.close();
   }, [location]);
 
+  // Embedded mode (OpenTrain shell iframe): keep the bar because it hosts
+  // breadcrumbs and per-page actions (e.g. the Create button on /projects),
+  // but drop the logo, sidebar and account chrome — the shell provides those.
+  const showMenubar = enabled || embedded;
+
   return (
     <div className={contentClass}>
-      {enabled && (
-        <div className={menubarClass}>
-          <Dropdown.Trigger dropdown={menuDropdownRef} closeOnClickOutside={!sidebarPinned}>
-            <div className={`${menubarClass.elem("trigger")} main-menu-trigger`}>
-              <LSLogo className={`${menubarClass.elem("logo")}`} alt="Open Label logo" />
-              <Hamburger opened={sidebarOpened} />
-            </div>
-          </Dropdown.Trigger>
+      {showMenubar && (
+        <div className={menubarClass.mod({ embedded }).toClassName()}>
+          {!embedded && (
+            <Dropdown.Trigger dropdown={menuDropdownRef} closeOnClickOutside={!sidebarPinned}>
+              <div className={`${menubarClass.elem("trigger")} main-menu-trigger`}>
+                <LSLogo className={`${menubarClass.elem("logo")}`} alt="Open Label logo" />
+                <Hamburger opened={sidebarOpened} />
+              </div>
+            </Dropdown.Trigger>
+          )}
 
           <div className={menubarContext}>
             <LeftContextMenu className={contextItem.mod({ left: true }).toClassName()} />
@@ -170,46 +186,51 @@ export const Menubar = ({ enabled, defaultOpened, defaultPinned, children, onSid
             </div>
           </div>
 
-          {ff.isActive(ff.FF_THEME_TOGGLE) && <ThemeToggle />}
+          {!embedded && ff.isActive(ff.FF_THEME_TOGGLE) && <ThemeToggle />}
 
-          <Dropdown.Trigger
-            ref={useMenuRef}
-            align="right"
-            content={
-              <Menu>
-                <Menu.Item
-                  icon={<IconPersonInCircle />}
-                  label="Account &amp; Settings"
-                  href={pages.AccountSettingsPage.path}
-                />
-                {/* <Menu.Item label="Dark Mode"/> */}
-                <Menu.Item icon={<IconDoor />} label="Log Out" href={absoluteURL("/logout")} data-external />
-                {showNewsletterDot && (
-                  <>
-                    <Menu.Divider />
-                    <Menu.Item
-                      className={cn("newsletter-menu-item").toClassName()}
-                      href={pages.AccountSettingsPage.path}
-                    >
-                      <span>Please check new notification settings in the Account & Settings page</span>
-                      <span className={cn("newsletter-menu-badge").toClassName()} />
-                    </Menu.Item>
-                  </>
-                )}
-              </Menu>
-            }
-          >
-            <div title={user?.email} className={menubarClass.elem("user").toClassName()}>
-              <Userpic user={user} isInProgress={isLoading} />
-              {showNewsletterDot && <div className={menubarClass.elem("userpic-badge").toClassName()} />}
-            </div>
-          </Dropdown.Trigger>
+          {!embedded && (
+            <Dropdown.Trigger
+              ref={useMenuRef}
+              align="right"
+              content={
+                <Menu>
+                  <Menu.Item
+                    icon={<IconPersonInCircle />}
+                    label="Account &amp; Settings"
+                    href={pages.AccountSettingsPage.path}
+                  />
+                  {/* <Menu.Item label="Dark Mode"/> */}
+                  <Menu.Item icon={<IconDoor />} label="Log Out" href={absoluteURL("/logout")} data-external />
+                  {showNewsletterDot && (
+                    <>
+                      <Menu.Divider />
+                      <Menu.Item
+                        className={cn("newsletter-menu-item").toClassName()}
+                        href={pages.AccountSettingsPage.path}
+                      >
+                        <span>Please check new notification settings in the Account & Settings page</span>
+                        <span className={cn("newsletter-menu-badge").toClassName()} />
+                      </Menu.Item>
+                    </>
+                  )}
+                </Menu>
+              }
+            >
+              <div
+                title={displayableEmail(user?.email) || userDisplayName(user)}
+                className={menubarClass.elem("user").toClassName()}
+              >
+                <Userpic user={user} isInProgress={isLoading} />
+                {showNewsletterDot && <div className={menubarClass.elem("userpic-badge").toClassName()} />}
+              </div>
+            </Dropdown.Trigger>
+          )}
         </div>
       )}
 
       <VersionProvider>
         <div className={contentClass.elem("body").toClassName()}>
-          {enabled && (
+          {enabled && !embedded && (
             <Dropdown
               ref={menuDropdownRef}
               onToggle={sidebarToggle}

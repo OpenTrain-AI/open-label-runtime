@@ -11,6 +11,7 @@ export * from "./lib/utils/lodash-replacements";
 export * from "./lib/utils/bem";
 export * from "./lib/utils/visitedProjects";
 export * from "./lib/utils/billing";
+export * from "./lib/utils/bridge-users";
 export * from "./hooks/useAbortController";
 export * from "./hooks/useResolveUser";
 export * from "./lib/hooks/useCopyText";

@@ -25,7 +25,9 @@ const AccountSettingsSection = () => {
   });
 
   const resolvedSections = useMemo(() => {
-    return settings.data && !("error" in settings.data) ? accountSettingsSections(settings.data, permissions) : [];
+    return settings.data && !("error" in settings.data)
+      ? accountSettingsSections(settings.data, permissions, user)
+      : [];
   }, [settings.data, user]);
 
   const currentSection = useMemo(
@@ -95,7 +97,9 @@ const AccountSettingsPage = () => {
   const { sectionId } = useParams<{ sectionId: string }>();
   const { user, permissions } = useAuth();
   const resolvedSections = useMemo(() => {
-    return settings.data && !("error" in settings.data) ? accountSettingsSections(settings.data, permissions) : [];
+    return settings.data && !("error" in settings.data)
+      ? accountSettingsSections(settings.data, permissions, user)
+      : [];
   }, [settings.data, user]);
 
   const menuItems = useMemo(

@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { NavLink } from "react-router-dom";
+import { displayableEmail, userDisplayName } from "@humansignal/core";
 import { IconCross } from "@humansignal/icons";
 import { Userpic, Button } from "@humansignal/ui";
 import { cn } from "../../../utils/bem";
@@ -23,10 +24,8 @@ const UserProjectsLinks = ({ projects }) => {
 };
 
 export const SelectedUser = ({ user, onClose }) => {
-  const fullName = [user.first_name, user.last_name]
-    .filter((n) => !!n)
-    .join(" ")
-    .trim();
+  const fullName = userDisplayName(user);
+  const email = displayableEmail(user.email);
 
   return (
     <div className={cn("user-info").toClassName()}>
@@ -43,7 +42,7 @@ export const SelectedUser = ({ user, onClose }) => {
         <Userpic user={user} style={{ width: 64, height: 64, fontSize: 28 }} />
         <div className={cn("user-info").elem("info-wrapper").toClassName()}>
           {fullName && <div className={cn("user-info").elem("full-name").toClassName()}>{fullName}</div>}
-          <p className={cn("user-info").elem("email").toClassName()}>{user.email}</p>
+          {email && <p className={cn("user-info").elem("email").toClassName()}>{email}</p>}
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import { type FormEventHandler, useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { Button, InputFile, ToastType, useToast, Userpic } from "@humansignal/ui";
-import { getApiInstance } from "@humansignal/core";
+import { displayableEmail, getApiInstance } from "@humansignal/core";
 import styles from "../AccountSettings.module.css";
 import { useAuth } from "@humansignal/core/providers/AuthProvider";
 import { atomWithMutation } from "jotai-tanstack-query";
@@ -141,9 +141,11 @@ export const PersonalInfo = () => {
             </div>
           </div>
           <div className={styles.flexRow}>
-            <div className={styles.flex1}>
-              <Input label="E-mail" type="email" readOnly={true} value={user?.email ?? ""} />
-            </div>
+            {displayableEmail(user?.email) && (
+              <div className={styles.flex1}>
+                <Input label="E-mail" type="email" readOnly={true} value={displayableEmail(user?.email)} />
+              </div>
+            )}
             <div className={styles.flex1}>
               <Input
                 label="Phone"

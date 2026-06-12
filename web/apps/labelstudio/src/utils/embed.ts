@@ -57,3 +57,23 @@ export function notifyEmbedParent(message: Record<string, unknown>) {
   if (!origin) return;
   window.parent.postMessage(message, origin);
 }
+
+let sessionExpiredReported = false;
+
+/**
+ * In embed mode an expired runtime session must not bounce the iframe to the
+ * login page — the OpenTrain shell mints a fresh launch session and swaps the
+ * iframe src instead. Returns true when the parent was notified (i.e. the
+ * caller should skip its own redirect).
+ */
+export function reportEmbedSessionExpired(): boolean {
+  if (!isEmbedded() || window.parent === window || !embedOrigin()) return false;
+  if (!sessionExpiredReported) {
+    sessionExpiredReported = true;
+    notifyEmbedParent({
+      type: "open-label:session-expired",
+      path: window.location.pathname + window.location.search,
+    });
+  }
+  return true;
+}

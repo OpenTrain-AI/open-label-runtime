@@ -1,5 +1,6 @@
 import { formatDistance } from "date-fns";
 import { useCallback, useEffect, useState } from "react";
+import { displayableEmail, isBridgeOrgOwnerEmail, userDisplayName } from "@humansignal/core";
 import { Userpic } from "@humansignal/ui";
 import { Pagination, Spinner } from "../../../components";
 import { usePage, usePageSize } from "../../../components/Pagination/Pagination";
@@ -33,8 +34,11 @@ export const PeopleList = ({ onSelect, selectedUser, defaultSelected }) => {
       });
 
       if (response?.results) {
-        setUsersList(response.results);
-        setTotalItems(response.count);
+        // The per-tenant service account that owns the runtime org is an
+        // implementation detail — keep it out of the roster.
+        const results = response.results.filter(({ user }) => !isBridgeOrgOwnerEmail(user?.email));
+        setUsersList(results);
+        setTotalItems(response.count - (response.results.length - results.length));
       } else {
         setUsersList([]);
         setTotalItems(0);
@@ -74,8 +78,8 @@ export const PeopleList = ({ onSelect, selectedUser, defaultSelected }) => {
             <div className={cn("people-list").elem("users").toClassName()}>
               <div className={cn("people-list").elem("header").toClassName()}>
                 <div className={cn("people-list").elem("column").mix("avatar").toClassName()} />
-                <div className={cn("people-list").elem("column").mix("email").toClassName()}>Email</div>
-                <div className={cn("people-list").elem("column").mix("name").toClassName()}>Name</div>
+                <div className={cn("people-list").elem("column").mix("email").toClassName()}>Name</div>
+                <div className={cn("people-list").elem("column").mix("name").toClassName()}>Email</div>
                 <div className={cn("people-list").elem("column").mix("last-activity").toClassName()}>Last Activity</div>
               </div>
               <div className={cn("people-list").elem("body").toClassName()}>
@@ -93,9 +97,11 @@ export const PeopleList = ({ onSelect, selectedUser, defaultSelected }) => {
                           <Userpic user={user} style={{ width: 28, height: 28 }} />
                         </CopyableTooltip>
                       </div>
-                      <div className={cn("people-list").elem("field").mix("email").toClassName()}>{user.email}</div>
+                      <div className={cn("people-list").elem("field").mix("email").toClassName()}>
+                        {userDisplayName(user)}
+                      </div>
                       <div className={cn("people-list").elem("field").mix("name").toClassName()}>
-                        {user.first_name} {user.last_name}
+                        {displayableEmail(user.email)}
                       </div>
                       <div className={cn("people-list").elem("field").mix("last-activity").toClassName()}>
                         {formatDistance(new Date(user.last_activity), new Date(), { addSuffix: true })}

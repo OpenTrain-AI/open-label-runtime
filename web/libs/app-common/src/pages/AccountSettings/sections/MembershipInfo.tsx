@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import styles from "./MembershipInfo.module.css";
 import { useQuery } from "@tanstack/react-query";
-import { getApiInstance } from "@humansignal/core";
+import { displayableEmail, getApiInstance } from "@humansignal/core";
 import { useMemo } from "react";
 import type { WrappedResponse } from "@humansignal/core/lib/api-proxy/types";
 import { useAuth } from "@humansignal/core/providers/AuthProvider";
@@ -141,10 +141,10 @@ export const MembershipInfo = () => {
         <div>{user?.active_organization}</div>
       </div>
 
-      {user?.active_organization_meta && (
+      {user?.active_organization_meta && displayableEmail(user.active_organization_meta.email) && (
         <div className="flex gap-2 w-full justify-between">
           <div>Owner</div>
-          <div>{user.active_organization_meta.email}</div>
+          <div>{displayableEmail(user.active_organization_meta.email)}</div>
         </div>
       )}
 

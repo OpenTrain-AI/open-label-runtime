@@ -78,15 +78,20 @@ export class Template {
   // fix `value` of object tags according to current columns from data
   fixColumns(columns) {
     if (columns.length === 1 && columns[0] === DEFAULT_COLUMN) return;
-    const existing = this.objects.map((obj) => obj.getAttribute("value").replace(/^\$/, ""));
+    const valueOf = (obj) => (obj.getAttribute("value") ?? obj.getAttribute("valueList") ?? "").replace(/^\$/, "");
+    const existing = this.objects.map(valueOf);
     const free = columns.filter((c) => !existing.includes(c));
+    let changed = false;
+
     for (const obj of this.objects) {
-      if (!columns.includes(obj.getAttribute("value").replace(/^\$/, ""))) {
-        obj.setAttribute("value", `$${free.shift() ?? columns[0]}`);
+      if (!columns.includes(valueOf(obj))) {
+        const attr = obj.hasAttribute("valueList") ? "valueList" : "value";
+        obj.setAttribute(attr, `$${free.shift() ?? columns[0]}`);
+        changed = true;
       }
     }
 
-    this.render();
+    if (changed) this.render();
   }
 
   addLabels(control, labels) {

@@ -11,6 +11,7 @@ export const RootPage = ({ content }) => {
   return (
     <Menubar
       enabled={!isEmbedded()}
+      embedded={isEmbedded()}
       defaultOpened={opened}
       defaultPinned={pinned}
       onSidebarToggle={(visible) => localStorage.setItem("sidebar-opened", visible)}

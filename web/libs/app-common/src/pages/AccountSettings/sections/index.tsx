@@ -7,7 +7,7 @@ import type React from "react";
 import { PersonalJWTToken } from "./PersonalJWTToken";
 import type { AuthTokenSettings } from "../types";
 import { ABILITY, type AuthPermissions } from "@humansignal/core/providers/AuthProvider";
-import { ff } from "@humansignal/core";
+import { ff, isBridgeManagedEmail } from "@humansignal/core";
 import { Badge } from "@humansignal/ui";
 
 export type SectionType = {
@@ -17,8 +17,16 @@ export type SectionType = {
   description?: React.FC;
 };
 
-export const accountSettingsSections = (settings: AuthTokenSettings, permissions: AuthPermissions): SectionType[] => {
-  const canCreateTokens = permissions.can(ABILITY.can_create_tokens);
+export const accountSettingsSections = (
+  settings: AuthTokenSettings,
+  permissions: AuthPermissions,
+  user?: { email?: string | null } | null,
+): SectionType[] => {
+  // OpenTrain-managed accounts authenticate through the control plane: their
+  // placeholder email receives no mail and API tokens are not part of the
+  // product surface.
+  const isBridgeUser = isBridgeManagedEmail(user?.email);
+  const canCreateTokens = permissions.can(ABILITY.can_create_tokens) && !isBridgeUser;
 
   return [
     {
@@ -40,7 +48,7 @@ export const accountSettingsSections = (settings: AuthTokenSettings, permissions
       description: () =>
         "Customize your keyboard shortcuts to speed up your workflow. Click on any hotkey below to assign a new key combination that works best for you.",
     },
-    {
+    !isBridgeUser && {
       title: "Email Preferences",
       id: "email-preferences",
       component: EmailPreferences,
