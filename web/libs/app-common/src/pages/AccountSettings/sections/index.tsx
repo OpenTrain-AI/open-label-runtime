@@ -20,12 +20,12 @@ export type SectionType = {
 export const accountSettingsSections = (
   settings: AuthTokenSettings,
   permissions: AuthPermissions,
-  user?: { email?: string | null } | null,
+  user?: { email?: string | null; bridge_session?: boolean } | null,
 ): SectionType[] => {
   // OpenTrain-managed accounts authenticate through the control plane: their
   // placeholder email receives no mail and API tokens are not part of the
   // product surface.
-  const isBridgeUser = isBridgeManagedEmail(user?.email);
+  const isBridgeUser = isBridgeManagedEmail(user?.email) || user?.bridge_session === true;
   const canCreateTokens = permissions.can(ABILITY.can_create_tokens) && !isBridgeUser;
 
   return [

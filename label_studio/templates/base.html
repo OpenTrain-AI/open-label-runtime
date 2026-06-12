@@ -175,6 +175,9 @@
       {% block app_user_extra %}{% endblock %}
     },
     lookupHotkey: lookupHotkey,
+    // Open Label runs fully whitelabeled: suppresses upstream Label Studio
+    // doc/branding links across editor, data manager, and settings pages.
+    whitelabel_is_active: true,
     debug: {{settings.DEBUG|yesno:"true,false"}},
     polling: {% if feature_flags.fflag_dev_disable_polling_killswitch_short %}false{% else %}true{% endif %},
     hostname: "{{settings.HOSTNAME}}",

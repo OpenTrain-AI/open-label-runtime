@@ -299,6 +299,22 @@ class Project(ProjectMixin, FsmHistoryStateModel):
     is_published = models.BooleanField(
         _('published'), default=False, help_text='Whether or not the project is published to annotators'
     )
+
+    PURPOSE_SCREENING = 'screening'
+    PURPOSE_PRODUCTION = 'production'
+    PURPOSE_CHOICES = (
+        (PURPOSE_SCREENING, 'Screening assessment'),
+        (PURPOSE_PRODUCTION, 'Production labeling'),
+    )
+    purpose = models.CharField(
+        _('purpose'),
+        max_length=32,
+        choices=PURPOSE_CHOICES,
+        null=True,
+        blank=True,
+        default=None,
+        help_text='How this project is used on OpenTrain: screening assessment or production labeling',
+    )
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
 

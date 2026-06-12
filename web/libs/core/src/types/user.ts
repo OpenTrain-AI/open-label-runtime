@@ -18,4 +18,6 @@ export type APIUser = {
   allow_newsletters: boolean;
   date_joined: string;
   permissions?: Ability[];
+  /** True when this session was minted by the OpenTrain launch bridge. */
+  bridge_session?: boolean;
 };

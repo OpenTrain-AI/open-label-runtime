@@ -51,12 +51,7 @@ export const PredictionsSettings = () => {
               Predictions List
             </Typography>
             <Typography size="small" className="text-neutral-content-subtler mt-base mb-wider">
-              List of predictions available in the project. Each card is associated with a separate model version. To
-              learn about how to import predictions,{" "}
-              <a href="https://labelstud.io/guide/predictions.html" target="_blank" rel="noreferrer">
-                see&nbsp;the&nbsp;documentation
-              </a>
-              .
+              List of predictions available in the project. Each card is associated with a separate model version.
             </Typography>
           </>
         )}

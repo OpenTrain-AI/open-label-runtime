@@ -52,6 +52,7 @@ export const ProjectsPage = () => {
       "created_at",
       "color",
       "is_published",
+      "is_draft",
       "assignment_settings",
       "state",
     ].join(",");

@@ -1,29 +1,21 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router";
 import { Button, Badge } from "@humansignal/ui";
-import {
-  IconWarningCircleFilled,
-  IconTerminal,
-  IconCode,
-  IconBook,
-  IconExternal,
-  IconCopyOutline,
-} from "@humansignal/icons";
+import { IconWarningCircleFilled, IconBook } from "@humansignal/icons";
 import { Form, Input } from "../../components/Form";
 import { Modal } from "../../components/Modal/Modal";
 import { Space } from "../../components/Space/Space";
 import { useAPI } from "../../providers/ApiProvider";
 import { useFixedLocation, useParams } from "../../providers/RoutesProvider";
 import { cn } from "../../utils/bem";
-import { isDefined, copyText } from "../../utils/helpers";
+import { isDefined } from "../../utils/helpers";
 import "./ExportPage.prefix.css";
 
-// Community Edition exports run synchronously in a single HTTP request.
-// Large exports can exceed typical proxy timeouts, so we warn early and link to alternatives.
+// Exports run synchronously in a single HTTP request, so large exports can
+// exceed typical proxy timeouts. The runtime is managed by OpenTrain — users
+// have no CLI/SDK access — so the escape hatch is support, not upstream docs.
 const LARGE_EXPORT_TASK_THRESHOLD = 1000;
-const EXPORT_TIMEOUT_DOCS_URL = "https://labelstud.io/guide/export.html#Export-timeout-in-Community-Edition";
-const EXPORT_CONSOLE_DOCS_URL = "https://labelstud.io/guide/export.html#Export-using-console-command";
-const EXPORT_SNAPSHOT_SDK_URL = "https://api.labelstud.io/api-reference/api-reference/projects/exports/create";
+const SUPPORT_EMAIL_URL = "mailto:support@opentrain.ai";
 
 // const formats = {
 //   json: 'JSON',
@@ -189,8 +181,8 @@ export const ExportPage = () => {
           )}
           <Space style={{ width: "100%" }} spread>
             <div className={cn("export-page").elem("recent").toClassName()}>
-              <a className="no-go" href={EXPORT_TIMEOUT_DOCS_URL} target="_blank" rel="noreferrer">
-                Having a timeout or trouble exporting large projects?
+              <a className="no-go" href={SUPPORT_EMAIL_URL}>
+                Having a timeout or trouble exporting large projects? Contact support
               </a>
             </div>
             <div className={cn("export-page").elem("actions").toClassName()}>
@@ -271,25 +263,18 @@ const ExportLargeProjectWarning = ({ taskCount }) => {
         Large project detected ({taskCount.toLocaleString()} tasks)
       </div>
       <div className={cn("export-page").elem("warning-body").toClassName()}>
-        To avoid potential timeouts during large dataset exports, use the{" "}
-        <a className="no-go" href={EXPORT_TIMEOUT_DOCS_URL} target="_blank" rel="noreferrer">
-          CLI/SDK export options
-        </a>
-        .
+        Large dataset exports can time out in the browser. If your export fails,{" "}
+        <a className="no-go" href={SUPPORT_EMAIL_URL}>
+          contact OpenTrain support
+        </a>{" "}
+        and we will prepare the export for you.
       </div>
     </div>
   );
 };
 
 const ExportTimeoutGuidance = ({ projectId, exportType }) => {
-  const cliCommand = `label-studio export ${projectId} ${exportType} --export-path=<output-path>`;
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = useCallback(() => {
-    copyText(cliCommand);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [cliCommand]);
+  const subject = encodeURIComponent(`Export timed out (project ${projectId}, format ${exportType})`);
 
   return (
     <div className={cn("export-page").elem("timeout").toClassName()}>
@@ -298,69 +283,17 @@ const ExportTimeoutGuidance = ({ projectId, exportType }) => {
         <div className={cn("export-page").elem("timeout-title").toClassName()}>Export timed out</div>
       </div>
       <div className={cn("export-page").elem("timeout-body").toClassName()}>
-        This export is processed synchronously in the UI and can exceed typical reverse-proxy timeouts (often around 90
-        seconds) for large datasets.
+        This project is too large to export in a single browser request.
       </div>
 
-      <div className={cn("export-page").elem("timeout-actions").toClassName()}>
-        <div className={cn("export-page").elem("timeout-actions-title").toClassName()}>Recommended options:</div>
-        <ul className={cn("export-page").elem("timeout-actions-list").toClassName()}>
-          <li>
-            <div className={cn("export-page").elem("timeout-action-item").toClassName()}>
-              <IconTerminal className={cn("export-page").elem("timeout-action-icon").toClassName()} />
-              <div className={cn("export-page").elem("timeout-action-content").toClassName()}>
-                <span>
-                  Export using the{" "}
-                  <a className="no-go" href={EXPORT_CONSOLE_DOCS_URL} target="_blank" rel="noreferrer">
-                    console command
-                    <IconExternal className={cn("export-page").elem("timeout-link-icon").toClassName()} />
-                  </a>
-                  :
-                </span>
-                <div className={cn("export-page").elem("timeout-code-wrapper").toClassName()}>
-                  <pre className={cn("export-page").elem("timeout-code").toClassName()}>
-                    <code>{cliCommand}</code>
-                  </pre>
-                  <button
-                    type="button"
-                    className={cn("export-page").elem("timeout-copy-button").toClassName()}
-                    onClick={handleCopy}
-                    aria-label="Copy command"
-                    title={copied ? "Copied!" : "Copy command"}
-                  >
-                    <IconCopyOutline className={cn("export-page").elem("timeout-copy-icon").toClassName()} />
-                    {copied && (
-                      <span className={cn("export-page").elem("timeout-copy-text").toClassName()}>Copied</span>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </li>
-          <li>
-            <div className={cn("export-page").elem("timeout-action-item").toClassName()}>
-              <IconCode className={cn("export-page").elem("timeout-action-icon").toClassName()} />
-              <div className={cn("export-page").elem("timeout-action-content").toClassName()}>
-                Use{" "}
-                <a className="no-go" href={EXPORT_SNAPSHOT_SDK_URL} target="_blank" rel="noreferrer">
-                  export snapshots via the SDK
-                  <IconExternal className={cn("export-page").elem("timeout-link-icon").toClassName()} />
-                </a>{" "}
-                to create and download a snapshot without relying on a single UI request.
-              </div>
-            </div>
-          </li>
-        </ul>
-        <div className={cn("export-page").elem("timeout-footer").toClassName()}>
-          <IconBook className={cn("export-page").elem("timeout-footer-icon").toClassName()} />
-          <span>
-            More details in the documentation:{" "}
-            <a className="no-go" href={EXPORT_TIMEOUT_DOCS_URL} target="_blank" rel="noreferrer">
-              Export timeouts
-              <IconExternal className={cn("export-page").elem("timeout-link-icon").toClassName()} />
-            </a>
-          </span>
-        </div>
+      <div className={cn("export-page").elem("timeout-footer").toClassName()}>
+        <IconBook className={cn("export-page").elem("timeout-footer-icon").toClassName()} />
+        <span>
+          <a className="no-go" href={`${SUPPORT_EMAIL_URL}?subject=${subject}`}>
+            Contact OpenTrain support
+          </a>{" "}
+          and we will prepare the export for you.
+        </span>
       </div>
     </div>
   );

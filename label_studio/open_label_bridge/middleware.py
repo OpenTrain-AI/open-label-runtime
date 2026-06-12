@@ -54,6 +54,9 @@ BRIDGE_SESSION_BLOCKED_PATTERNS = [
     re.compile(r'^/open-label/bridge'),
     re.compile(r'^/api/current-user/(token|reset-token)'),
     re.compile(r'^/api/invite'),
+    # The control plane mirrors project lifecycle through an org-wide webhook;
+    # letting any bridge session edit /api/webhooks could silently break sync.
+    re.compile(r'^/api/webhooks'),
 ]
 
 PROJECT_PATH_PATTERN = re.compile(r'^/(?:api/)?projects/(\d+)')

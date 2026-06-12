@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { useAPI } from "../../providers/ApiProvider";
 import { cn } from "../../utils/bem";
 import "./VersionNotifier.prefix.css";
-import { IconBell } from "@humansignal/icons";
 
 const VersionContext = createContext();
 
@@ -42,25 +41,12 @@ export const VersionProvider = ({ children }) => {
   return <VersionContext.Provider value={state}>{children}</VersionContext.Provider>;
 };
 
-export const VersionNotifier = ({ showNewVersion, showCurrentVersion }) => {
-  const { newVersion, updateTime, latestVersion, version } = useContext(VersionContext) ?? {};
-  const url = `https://labelstud.io/redirect/update?version=${version}`;
+export const VersionNotifier = ({ showCurrentVersion }) => {
+  // The "new version available" upsell linked to labelstud.io — the runtime is
+  // managed by OpenTrain, so upgrade prompts are noise; only show the version.
+  const { version } = useContext(VersionContext) ?? {};
 
-  return newVersion && showNewVersion ? (
-    <li className={cn("version-notifier").toClassName()}>
-      <a href={url} target="_blank" rel="noreferrer">
-        <div className={cn("version-notifier").elem("icon").toClassName()}>
-          <IconBell />
-        </div>
-        <div className={cn("version-notifier").elem("content").toClassName()}>
-          <div className={cn("version-notifier").elem("title").toClassName()} data-date={updateTime}>
-            {latestVersion} Available
-          </div>
-          <div className={cn("version-notifier").elem("description").toClassName()}>Current version: {version}</div>
-        </div>
-      </a>
-    </li>
-  ) : version && showCurrentVersion ? (
+  return version && showCurrentVersion ? (
     <Link className={cn("current-version").toClassName()} to="/version" target="_blank">
       v{version}
     </Link>

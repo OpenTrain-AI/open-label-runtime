@@ -23,6 +23,7 @@ gtag('config', 'UA-129877673-1');
 <script nonce="{{request.csp_nonce}}">
   window.APP_SETTINGS = window.APP_SETTINGS ?? {};
   window.APP_SETTINGS.collect_analytics = {{ settings.COLLECT_ANALYTICS|yesno:"true,false" }};
+  window.APP_SETTINGS.whitelabel_is_active = true;
 
   // Log event to the server, if analytics are enabled
   // This is a fallback for when the __lsa global is not defined

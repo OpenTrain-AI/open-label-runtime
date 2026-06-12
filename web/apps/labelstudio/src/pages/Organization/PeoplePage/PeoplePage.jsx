@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from "react";
 import { useUpdatePageTitle } from "@humansignal/core";
 import { cn } from "../../../utils/bem";
 import { FF_LSDV_E_297, isFF } from "../../../utils/feature-flags";
-import "./PeopleInvitation.prefix.css";
 import { PeopleList } from "./PeopleList";
 import "./PeoplePage.prefix.css";
 import { SelectedUser } from "./SelectedUser";

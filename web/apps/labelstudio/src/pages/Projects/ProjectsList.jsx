@@ -6,6 +6,7 @@ import { IconCheck, IconEllipsis, IconMinus, IconSparks } from "@humansignal/ico
 import { Userpic, Button, Dropdown, Tooltip } from "@humansignal/ui";
 import { Menu, Pagination } from "../../components";
 import { cn } from "../../utils/bem";
+import { isEmbedded, notifyEmbedParent } from "../../utils/embed";
 import { ProjectStateChip } from "@humansignal/app-common";
 
 const DEFAULT_CARD_COLORS = ["#FFFFFF", "#FDFDFC"];
@@ -95,6 +96,20 @@ const ProjectCard = ({ project }) => {
                   <Menu contextual>
                     <Menu.Item href={`/projects/${project.id}/settings`}>Settings</Menu.Item>
                     <Menu.Item href={`/projects/${project.id}/data?labeling=1`}>Label</Menu.Item>
+                    {/* Drafts never mirror to the control plane, so they cannot be assigned. */}
+                    {isEmbedded() && !project.is_draft && (
+                      <Menu.Item
+                        onClick={() =>
+                          notifyEmbedParent({
+                            type: "open-label:assign-to-job",
+                            projectId: project.id,
+                            title: project.title ?? "New project",
+                          })
+                        }
+                      >
+                        Assign to job…
+                      </Menu.Item>
+                    )}
                   </Menu>
                 }
               >

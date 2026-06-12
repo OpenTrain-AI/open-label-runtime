@@ -14,7 +14,63 @@ import { useDraftProject } from "./utils/useDraftProject";
 import { Input, TextArea } from "../../components/Form";
 import { notifyEmbedParent } from "../../utils/embed";
 
-const ProjectName = ({ name, setName, onSaveName, onSubmit, error, description, setDescription, show = true }) =>
+export const PROJECT_PURPOSES = [
+  {
+    value: "screening",
+    title: "Screening assessment",
+    description: "A small fixed task set; every applicant completes the same tasks so you can compare them.",
+  },
+  {
+    value: "production",
+    title: "Production labeling",
+    description: "Real labeling work; tasks are distributed across your workers.",
+  },
+];
+
+const PurposePicker = ({ purpose, setPurpose }) => (
+  <div className="w-full flex flex-col gap-2">
+    <span className="w-full">How will this project be used?</span>
+    <div className="w-full grid grid-cols-2 gap-3" role="radiogroup" aria-label="Project purpose">
+      {PROJECT_PURPOSES.map((option) => {
+        const selected = purpose === option.value;
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            data-testid={`purpose-${option.value}`}
+            onClick={() => setPurpose(option.value)}
+            className={[
+              "flex flex-col items-start gap-1 rounded-md border p-4 text-left transition-colors",
+              selected
+                ? "border-primary-border bg-primary-emphasis-subtle"
+                : "border-neutral-border hover:border-neutral-border-bold",
+            ].join(" ")}
+          >
+            <span className="font-medium text-neutral-content">{option.title}</span>
+            <span className="text-sm text-neutral-content-subtler">{option.description}</span>
+          </button>
+        );
+      })}
+    </div>
+    {!purpose && <span className="text-sm text-neutral-content-subtler">Select a purpose to enable Save.</span>}
+  </div>
+);
+
+const ProjectName = ({
+  name,
+  setName,
+  onSaveName,
+  onSubmit,
+  error,
+  description,
+  setDescription,
+  purpose,
+  setPurpose,
+  show = true,
+}) =>
   !show ? null : (
     <form
       className={cn("project-name").toClassName()}
@@ -52,6 +108,7 @@ const ProjectName = ({ name, setName, onSaveName, onSubmit, error, description, 
           className="project-description w-full"
         />
       </div>
+      <PurposePicker purpose={purpose} setPurpose={setPurpose} />
     </form>
   );
 
@@ -66,6 +123,7 @@ export const CreateProject = ({ onClose }) => {
   const [name, setName] = React.useState("");
   const [error, setError] = React.useState();
   const [description, setDescription] = React.useState("");
+  const [purpose, setPurpose] = React.useState(null);
   const [sample, setSample] = React.useState(null);
 
   const setStep = React.useCallback((step) => {
@@ -102,12 +160,16 @@ export const CreateProject = ({ onClose }) => {
     () => ({
       title: name,
       description,
+      purpose,
       label_config: project?.label_config ?? "<View></View>",
     }),
-    [name, description, project?.label_config],
+    [name, description, purpose, project?.label_config],
   );
 
   const onCreate = React.useCallback(async () => {
+    // Enter-to-submit must not bypass the disabled Save button.
+    if (!purpose) return;
+
     // First, persist project with label_config so import/reimport validates against it
     const response = await api.callApi("updateProject", {
       params: {
@@ -135,7 +197,7 @@ export const CreateProject = ({ onClose }) => {
     notifyEmbedParent({ type: "open-label:project-created", projectId: response.id, title: response.title ?? name });
 
     history.push(`/projects/${response.id}/data`);
-  }, [project, projectBody, finishUpload]);
+  }, [project, projectBody, purpose, finishUpload]);
 
   const onSaveName = async () => {
     if (error) return;
@@ -193,7 +255,8 @@ export const CreateProject = ({ onClose }) => {
               onClick={onCreate}
               waiting={waiting || uploading}
               waitingClickable={false}
-              disabled={!project || uploadDisabled || error}
+              disabled={!project || uploadDisabled || error || !purpose}
+              tooltip={!purpose ? "Choose how this project will be used first" : undefined}
             >
               Save
             </Button>
@@ -207,6 +270,8 @@ export const CreateProject = ({ onClose }) => {
           onSubmit={onCreate}
           description={description}
           setDescription={setDescription}
+          purpose={purpose}
+          setPurpose={setPurpose}
           show={step === "name"}
         />
         <ImportPage
