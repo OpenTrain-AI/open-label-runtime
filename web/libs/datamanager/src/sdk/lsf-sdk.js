@@ -13,6 +13,7 @@ import { isDefined } from "../utils/utils";
 import { Modal } from "../components/Common/Modal/Modal";
 import { CommentsSdk } from "./comments-sdk";
 // import { LSFHistory } from "./lsf-history";
+import { activeTimeTracker } from "./active-time-tracker";
 import { annotationToServer, taskToLSFormat } from "./lsf-utils";
 import { when, runInAction } from "mobx";
 import { isAlive } from "mobx-state-tree";
@@ -132,6 +133,7 @@ export class LSFWrapper {
     this.datamanager = dm;
     this.store = dm.store;
     this.root = element;
+    activeTimeTracker.ensureAttached();
     this.task = task;
     this.preload = preload;
     this.labelStream = isLabelStream ?? false;
@@ -1404,7 +1406,9 @@ export class LSFWrapper {
   prepareData(annotation, { includeId, isNewDraft } = {}) {
     const userGenerate = !annotation.userGenerate || annotation.sentUserGenerate;
     const currentDraft = this.findActiveDraft(annotation);
-    const sessionTime = (Date.now() - annotation.loadedDate.getTime()) / 1000;
+    // Idle-aware session time: pauses after 30s without user input so walking
+    // away from an open task does not inflate lead_time.
+    const sessionTime = activeTimeTracker.activeSecondsSince(annotation.loadedDate.getTime());
     const submittedTime = isNewDraft ? 0 : Number(annotation.leadTime ?? 0);
     const draftTime = Number(currentDraft?.lead_time ?? 0);
     const leadTime = submittedTime + draftTime + sessionTime;
