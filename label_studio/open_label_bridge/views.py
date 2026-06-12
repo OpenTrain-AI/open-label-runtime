@@ -321,6 +321,21 @@ class BridgeProjectUpdateAPI(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    def get(self, request, project_id):
+        project = Project.objects.filter(id=project_id).first()
+        if project is None:
+            return Response({'detail': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {
+                'runtimeProjectId': str(project.id),
+                'title': project.title,
+                'description': project.description or '',
+                'expert_instruction': project.expert_instruction or '',
+                'show_instruction': bool(project.show_instruction),
+            },
+            status=status.HTTP_200_OK,
+        )
+
     def patch(self, request, project_id):
         project = Project.objects.filter(id=project_id).first()
         if project is None:
