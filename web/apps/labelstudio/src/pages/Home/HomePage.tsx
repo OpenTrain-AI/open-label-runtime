@@ -219,12 +219,6 @@ export const HomePage: Page = () => {
               })}
             </ul>
           </SimpleCard>
-          <div className="flex gap-3 items-center rounded-lg border border-primary-border-subtle bg-primary-emphasis-subtle px-3 py-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-grape-subtle text-primary-icon font-semibold">
-              OL
-            </div>
-            <span className="text-neutral-content-subtle">Open Label Runtime for OpenTrain</span>
-          </div>
         </section>
       </div>
       {modalIsOpen && <CreateProject onClose={() => setModalIsOpen(false)} />}
