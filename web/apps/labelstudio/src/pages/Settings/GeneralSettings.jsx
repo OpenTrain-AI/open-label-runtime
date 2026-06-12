@@ -1,9 +1,60 @@
 import { Button } from "@humansignal/ui";
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import { Form, Input, TextArea } from "../../components/Form";
 import { RadioGroup } from "../../components/Form/Elements/RadioGroup/RadioGroup";
 import { ProjectContext } from "../../providers/ProjectProvider";
 import { cn } from "../../utils/bem";
+import { isEmbedded, notifyEmbedParent, onEmbedParentMessage } from "../../utils/embed";
+
+const JOB_LINK_MODE_LABELS = {
+  screening: "Screening assessment",
+  production: "Production labeling",
+};
+
+export const OpenTrainJobSection = ({ project, fetchProject }) => {
+  useEffect(() => {
+    if (!project.id) return undefined;
+    return onEmbedParentMessage("open-label:job-link-updated", (data) => {
+      if (String(data.projectId) === String(project.id)) fetchProject(project.id, true);
+    });
+  }, [project.id, fetchProject]);
+
+  const job = project.opentrain_job;
+
+  return (
+    <div className={cn("settings-wrapper").toClassName()} style={{ marginTop: 32 }} data-testid="opentrain-section">
+      <div className={cn("settings-wrapper").elem("header").toClassName()}>OpenTrain</div>
+      <div className="settings-description">
+        {job ? (
+          <p style={{ margin: 0 }}>
+            Linked to job <b>{job.jobTitle ?? job.jobId}</b>
+            {job.mode ? ` — ${JOB_LINK_MODE_LABELS[job.mode] ?? job.mode}` : ""}
+          </p>
+        ) : (
+          <p style={{ margin: 0 }}>Not linked to an OpenTrain job.</p>
+        )}
+      </div>
+      {isEmbedded() && !job && (
+        <div style={{ marginTop: 16 }}>
+          <Button
+            type="button"
+            look="outlined"
+            aria-label="Assign to OpenTrain job"
+            onClick={() =>
+              notifyEmbedParent({
+                type: "open-label:assign-to-job",
+                projectId: project.id,
+                title: project.title ?? "New project",
+              })
+            }
+          >
+            Assign to OpenTrain job…
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const GeneralSettings = () => {
   const { project, fetchProject } = useContext(ProjectContext);
@@ -78,6 +129,7 @@ export const GeneralSettings = () => {
             </Form.Actions>
           </Form>
         </div>
+        <OpenTrainJobSection project={project} fetchProject={fetchProject} />
       </div>
     </div>
   );

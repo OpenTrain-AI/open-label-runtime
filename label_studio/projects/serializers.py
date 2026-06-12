@@ -149,6 +149,16 @@ class ProjectSerializer(FlexFieldsModelSerializer):
     queue_total = serializers.SerializerMethodField()
     queue_done = serializers.SerializerMethodField()
     state = FSMStateField(read_only=True)  # FSM state - automatically uses annotation if present
+    opentrain_job = serializers.SerializerMethodField(
+        default=None, read_only=True, help_text='OpenTrain job linked to this project, or null'
+    )
+
+    @staticmethod
+    def get_opentrain_job(project):
+        link = getattr(project, 'open_label_bridge_link', None)
+        if link is None or not link.linked_job_id:
+            return None
+        return {'jobId': link.linked_job_id, 'jobTitle': link.linked_job_title, 'mode': link.linked_job_mode}
 
     @property
     def user_id(self):
@@ -314,6 +324,7 @@ class ProjectSerializer(FlexFieldsModelSerializer):
             'queue_done',
             'config_suitable_for_bulk_annotation',
             'state',
+            'opentrain_job',
         ]
 
     def validate_label_config(self, value):

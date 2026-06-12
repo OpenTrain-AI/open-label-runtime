@@ -58,6 +58,25 @@ export function notifyEmbedParent(message: Record<string, unknown>) {
   window.parent.postMessage(message, origin);
 }
 
+/**
+ * Subscribes to a message posted by the embedding OpenTrain shell. Only
+ * messages from the embed origin are accepted. Returns an unsubscribe
+ * function; a no-op outside embed mode.
+ */
+export function onEmbedParentMessage(type: string, handler: (data: Record<string, unknown>) => void): () => void {
+  if (!isEmbedded()) return () => {};
+  const origin = embedOrigin();
+  if (!origin) return () => {};
+  const listener = (event: MessageEvent) => {
+    if (event.origin !== origin) return;
+    const data = event.data as Record<string, unknown> | null;
+    if (!data || typeof data !== "object" || data.type !== type) return;
+    handler(data);
+  };
+  window.addEventListener("message", listener);
+  return () => window.removeEventListener("message", listener);
+}
+
 let sessionExpiredReported = false;
 
 /**

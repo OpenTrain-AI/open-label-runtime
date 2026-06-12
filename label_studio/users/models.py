@@ -120,6 +120,13 @@ class User(UserMixin, AbstractBaseUser, PermissionsMixin, UserLastActivityMixin)
     last_name = models.CharField(_('last name'), max_length=256, blank=True)
     phone = models.CharField(_('phone'), max_length=256, blank=True)
     avatar = models.ImageField(upload_to=hash_upload, blank=True)
+    external_avatar_url = models.URLField(
+        _('external avatar url'),
+        max_length=1024,
+        blank=True,
+        default='',
+        help_text=_('Avatar hosted by an external identity provider; preferred over the uploaded avatar'),
+    )
     custom_hotkeys = models.JSONField(
         _('custom hotkeys'),
         default=dict,
@@ -170,6 +177,8 @@ class User(UserMixin, AbstractBaseUser, PermissionsMixin, UserLastActivityMixin)
 
     @cached_property
     def avatar_url(self):
+        if self.external_avatar_url:
+            return self.external_avatar_url
         if self.avatar:
             if settings.CLOUD_FILE_STORAGE_ENABLED:
                 return self.avatar.url

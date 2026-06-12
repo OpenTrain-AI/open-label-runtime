@@ -1,6 +1,8 @@
 import logging
 import time
 
+import bleach
+from constants import SAFE_HTML_ATTRIBUTES, SAFE_HTML_TAGS
 from core.label_config import validate_label_config
 from django.contrib import auth
 from django.db import transaction
@@ -17,7 +19,7 @@ from tasks.models import Task
 from webhooks.models import Webhook
 
 from .consume import BridgeConsumeError, consume_nonce
-from .identity import ensure_bridge_user
+from .identity import ensure_bridge_user, normalized_avatar_url
 from .models import BridgeIdentity, BridgeProjectLink
 from .scope import normalized_scope_task_ids
 from .tenancy import ensure_control_plane_webhook, ensure_runtime_organization
@@ -192,12 +194,24 @@ class BridgeOrganizationMembersAPI(APIView):
                     {'detail': f'members[{index}] must include userId'},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            normalized.append((opentrain_user_id, _first_string(record.get('displayName'))))
+            raw_avatar_url = record.get('avatarUrl')
+            if raw_avatar_url is None:
+                avatar_url = None
+            else:
+                avatar_url = normalized_avatar_url(raw_avatar_url)
+                if avatar_url is None:
+                    return Response(
+                        {'detail': f'members[{index}].avatarUrl must be an https URL of at most 1024 characters'},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+            normalized.append((opentrain_user_id, _first_string(record.get('displayName')), avatar_url))
 
         organization, _ = ensure_runtime_organization(opentrain_organization_id)
         ensured = []
-        for opentrain_user_id, display_name in normalized:
-            user = ensure_bridge_user(opentrain_user_id, organization, display_name=display_name)
+        for opentrain_user_id, display_name, avatar_url in normalized:
+            user = ensure_bridge_user(
+                opentrain_user_id, organization, display_name=display_name, avatar_url=avatar_url
+            )
             ensured.append({'openTrainUserId': opentrain_user_id, 'runtimeUserId': str(user.id)})
 
         return Response(
@@ -296,6 +310,12 @@ class BridgeProjectCreateAPI(APIView):
         )
 
 
+# LS's SAFE_HTML_TAGS allows <script>/<noscript> for the trusted native editor;
+# bridge-synced instructions are rendered with dangerouslySetInnerHTML in embed
+# surfaces, so active content is stripped on this write path.
+INSTRUCTION_SAFE_TAGS = [tag for tag in SAFE_HTML_TAGS if tag not in ('script', 'noscript')]
+
+
 class BridgeProjectUpdateAPI(APIView):
     """Control-plane initiated metadata updates; bridge writes emit no webhooks, so no echo loop."""
 
@@ -316,14 +336,74 @@ class BridgeProjectUpdateAPI(APIView):
         if isinstance(data.get('description'), str):
             project.description = data['description']
             update_fields.append('description')
+        if isinstance(data.get('expert_instruction'), str):
+            project.expert_instruction = bleach.clean(
+                data['expert_instruction'], tags=INSTRUCTION_SAFE_TAGS, attributes=SAFE_HTML_ATTRIBUTES, strip=True
+            )
+            update_fields.append('expert_instruction')
+        if isinstance(data.get('show_instruction'), bool):
+            project.show_instruction = data['show_instruction']
+            update_fields.append('show_instruction')
         if not update_fields:
             return Response(
-                {'detail': 'title or description is required'},
+                {'detail': 'title, description, expert_instruction or show_instruction is required'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         project.save(update_fields=update_fields)
         return Response(
             {'runtimeProjectId': str(project.id), 'title': project.title},
+            status=status.HTTP_200_OK,
+        )
+
+
+JOB_LINK_MODES = ('screening', 'production')
+
+
+class BridgeProjectJobLinkAPI(APIView):
+    """Mirrors the OpenTrain job link onto the runtime project for display in project settings.
+
+    PATCH with {jobId, jobTitle, mode} upserts the mirror; PATCH with {"jobId": null}
+    (or omitting jobId) clears it. Display-only: the control plane owns the real link.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, project_id):
+        project = Project.objects.filter(id=project_id).first()
+        if project is None:
+            return Response({'detail': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        data = request.data if isinstance(request.data, dict) else {}
+        job_id = _first_string(data.get('jobId'))
+        job_title = _first_string(data.get('jobTitle'))
+        mode = _first_string(data.get('mode'))
+        if mode is not None:
+            mode = mode.lower()
+            if mode not in JOB_LINK_MODES:
+                return Response(
+                    {'detail': "mode must be 'screening' or 'production'"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
+        link, _ = BridgeProjectLink.objects.get_or_create(project=project)
+        if job_id:
+            link.linked_job_id = job_id[:128]
+            link.linked_job_title = job_title[:512] if job_title else None
+            link.linked_job_mode = mode
+        else:
+            link.linked_job_id = None
+            link.linked_job_title = None
+            link.linked_job_mode = None
+        link.save(update_fields=['linked_job_id', 'linked_job_title', 'linked_job_mode'])
+
+        return Response(
+            {
+                'runtimeProjectId': str(project.id),
+                'opentrainJob': (
+                    {'jobId': link.linked_job_id, 'jobTitle': link.linked_job_title, 'mode': link.linked_job_mode}
+                    if link.linked_job_id
+                    else None
+                ),
+            },
             status=status.HTTP_200_OK,
         )
 
@@ -495,9 +575,7 @@ class BridgeProjectAnnotationsAPI(APIView):
             if annotation.completed_by_id is not None
         }
         opentrain_user_by_runtime_id = dict(
-            BridgeIdentity.objects.filter(user_id__in=completed_by_ids).values_list(
-                'user_id', 'opentrain_user_id'
-            )
+            BridgeIdentity.objects.filter(user_id__in=completed_by_ids).values_list('user_id', 'opentrain_user_id')
         )
 
         task_payloads = []
@@ -517,9 +595,7 @@ class BridgeProjectAnnotationsAPI(APIView):
                             'leadTimeSeconds': annotation.lead_time,
                             'createdAt': _isoformat(annotation.created_at),
                             'updatedAt': _isoformat(annotation.updated_at),
-                            'completedByOpenTrainUserId': opentrain_user_by_runtime_id.get(
-                                annotation.completed_by_id
-                            ),
+                            'completedByOpenTrainUserId': opentrain_user_by_runtime_id.get(annotation.completed_by_id),
                         }
                         for annotation in task.annotations.all()
                     ],
