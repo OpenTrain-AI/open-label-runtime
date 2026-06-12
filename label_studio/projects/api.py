@@ -3,6 +3,7 @@
 import logging
 import os
 import pathlib
+import re
 
 from core.feature_flags import flag_set
 from core.filters import ListFilter
@@ -782,6 +783,13 @@ class ProjectTaskListAPI(GetParentObjectMixin, generics.ListCreateAPIView, gener
         return instance
 
 
+# Tags referenced by upstream templates but not registered in this fork's editor
+# (Chat is an empty stub, OcrLabels was never ported) — configs using them crash
+# the editor with "ConfigurationError: Not expecting tag".
+UNSUPPORTED_TEMPLATE_TAGS = ('Chat', 'OcrLabels')
+_UNSUPPORTED_TAG_RE = re.compile(r'</?\s*(%s)[\s>/]' % '|'.join(UNSUPPORTED_TEMPLATE_TAGS), re.IGNORECASE)
+
+
 def read_templates_and_groups():
     annotation_templates_dir = find_dir('annotation_templates')
     configs = []
@@ -791,6 +799,9 @@ def read_templates_and_groups():
         if settings.VERSION_EDITION != 'Community':
             if config.get('group', '').lower() == 'community contributions':
                 continue
+
+        if _UNSUPPORTED_TAG_RE.search(config.get('config', '') or ''):
+            continue
 
         if config.get('image', '').startswith('/static') and settings.HOSTNAME:
             # if hostname set manually, create full image urls
@@ -802,6 +813,9 @@ def read_templates_and_groups():
 
     if settings.VERSION_EDITION != 'Community':
         groups = [group for group in groups if group.lower() != 'community contributions']
+
+    populated_groups = {config.get('group', '') for config in configs}
+    groups = [group for group in groups if group in populated_groups]
 
     logger.debug(f'{len(configs)} templates found.')
     return {'templates': configs, 'groups': groups}

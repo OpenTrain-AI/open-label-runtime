@@ -1,4 +1,5 @@
 import { types } from "mobx-state-tree";
+import { userDisplayName } from "@humansignal/core";
 import { camelizeKeys } from "../utils/helpers";
 import { StringOrNumberID } from "./types";
 
@@ -22,7 +23,7 @@ export const User = types
     },
 
     get displayName() {
-      return self.fullName || (self.username ? self.username : self.email);
+      return userDisplayName(self);
     },
   }))
   .preProcessSnapshot((sn) => {

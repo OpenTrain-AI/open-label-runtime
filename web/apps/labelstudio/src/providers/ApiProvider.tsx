@@ -9,6 +9,7 @@ import type { ApiResponse } from "@humansignal/core/lib/api-proxy/types";
 import { ErrorWrapper } from "../components/Error/Error";
 import { modal } from "../components/Modal/Modal";
 import { API_CONFIG } from "../config/ApiConfig";
+import { reportEmbedSessionExpired } from "../utils/embed";
 import { absoluteURL, isDefined } from "../utils/helpers";
 import { FF_IMPROVE_GLOBAL_ERROR_MESSAGES, isFF } from "../utils/feature-flags";
 import { ToastType, useToast } from "@humansignal/ui";
@@ -22,7 +23,7 @@ export const API_ERROR_TOAST_DURATION = 10000;
 const apiInstance = createApiInstance({
   ...API_CONFIG,
   onRequestFinished(res) {
-    if (res.status === 401) {
+    if (res.status === 401 && !reportEmbedSessionExpired()) {
       location.href = "/";
     }
   },
@@ -119,7 +120,9 @@ export const ApiProvider = forwardRef<ApiContextType, PropsWithChildren<Record<s
     // Handle 401 redirects
     if (status === 401) {
       apiLocked = true;
-      location.href = absoluteURL("/");
+      if (!reportEmbedSessionExpired()) {
+        location.href = absoluteURL("/");
+      }
       return;
     }
 

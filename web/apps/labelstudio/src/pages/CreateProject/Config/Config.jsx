@@ -809,22 +809,36 @@ export const ConfigPage = ({
 
   const [warning, _setWarning] = React.useState();
 
+  // The "$undefined$" sentinel stands for raw file uploads; if the project has
+  // real data columns they must win, otherwise configs end up pointing at a
+  // literal "$undefined$" key and the preview breaks.
+  const hasOnlySentinelColumns = (cols) => !cols?.length || cols.every((col) => col === DEFAULT_COLUMN);
+
   React.useEffect(() => {
     const fetchData = async () => {
-      if (!externalColumns && project?.id && !columns) {
+      if (project?.id && hasOnlySentinelColumns(externalColumns) && hasOnlySentinelColumns(columns)) {
         const res = await api.callApi("dataSummary", {
           params: { pk: project.id },
           // 404 is ok, and errors here don't matter
           errorFilter: () => true,
         });
 
-        if (res?.common_data_columns) {
+        if (res?.common_data_columns?.length) {
           setColumns(res.common_data_columns);
         }
       }
     };
     fetchData();
   }, [project?.id, externalColumns]);
+
+  // Remap object tag `value` attributes onto the real data columns whenever
+  // they reference columns the project doesn't have (e.g. a stale
+  // "$undefined$" left behind by a raw-file upload wizard run).
+  React.useEffect(() => {
+    if (template && columns?.length && !hasOnlySentinelColumns(columns)) {
+      template.fixColumns(columns);
+    }
+  }, [columns, template]);
 
   const onSelectRecipe = React.useCallback((recipe) => {
     if (!recipe) {

@@ -10,6 +10,7 @@ import { Tooltip, Userpic } from "@humansignal/ui";
 import { Common } from "../../Filters/types";
 import "./Annotators.prefix.css";
 import { isActive, FF_DM_FILTER_MEMBERS } from "@humansignal/core/lib/utils/feature-flags";
+import { userDisplayName } from "@humansignal/core";
 import { VariantSelect } from "../../Filters/types/List";
 import { UserSelect } from "../../Common/UserSelect";
 
@@ -62,7 +63,7 @@ export const Annotators = (cell) => {
               sdk.invoke("userCellClick", e, column.alias, task, user, suppressStats);
             }}
           >
-            <Tooltip title={user.fullName || user.email}>
+            <Tooltip title={userDisplayName(user)}>
               <Userpic
                 user={user}
                 faded={userpicIsFaded}

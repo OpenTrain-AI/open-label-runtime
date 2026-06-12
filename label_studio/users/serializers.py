@@ -103,12 +103,19 @@ class BaseUserSerializerUpdate(BaseUserSerializer):
 
 class BaseWhoAmIUserSerializer(BaseUserSerializer):
     permissions = serializers.SerializerMethodField()
+    bridge_session = serializers.SerializerMethodField()
 
     class Meta(BaseUserSerializer.Meta):
-        fields = BaseUserSerializer.Meta.fields + ('permissions',)
+        fields = BaseUserSerializer.Meta.fields + ('permissions', 'bridge_session')
 
     def get_permissions(self, user) -> list[str]:
         return [perm for _, perm in all_permissions]
+
+    def get_bridge_session(self, user) -> bool:
+        """True when this session was minted by the OpenTrain control plane."""
+        request = self.context.get('request')
+        session = getattr(request, 'session', None) if request is not None else None
+        return bool(session and session.get('open_label_bridge'))
 
 
 class UserSimpleSerializer(BaseUserSerializer):
