@@ -47,11 +47,13 @@ CANDIDATE_BLOCKED_WRITE_PATTERNS = [
 ]
 
 # Blocked for EVERY bridge session (candidate and employer_review alike):
-# shadow users must never reach the control-plane management API or mint
-# long-lived DRF tokens that would outlive their scoped launch session.
+# shadow users must never reach the control-plane management API, mint
+# long-lived DRF tokens that would outlive their scoped launch session, or
+# use invite links — membership is managed natively on OpenTrain.
 BRIDGE_SESSION_BLOCKED_PATTERNS = [
     re.compile(r'^/open-label/bridge'),
     re.compile(r'^/api/current-user/(token|reset-token)'),
+    re.compile(r'^/api/invite'),
 ]
 
 PROJECT_PATH_PATTERN = re.compile(r'^/(?:api/)?projects/(\d+)')

@@ -154,6 +154,58 @@ class BridgeOrganizationCreateAPI(APIView):
         )
 
 
+BRIDGE_MEMBER_BATCH_MAX = 200
+
+
+class BridgeOrganizationMembersAPI(APIView):
+    """Idempotently mirrors OpenTrain team members into the tenant's runtime org.
+
+    Members provisioned here appear in the runtime roster before their first
+    launch, so the org page matches the OpenTrain team without invite links.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data if isinstance(request.data, dict) else {}
+        opentrain_organization_id = _extract_opentrain_organization_id(data)
+        if not opentrain_organization_id:
+            return Response(
+                {'detail': 'openTrainOrganizationId is required'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        members = data.get('members')
+        if not isinstance(members, list) or not members:
+            return Response({'detail': 'members must be a non-empty list'}, status=status.HTTP_400_BAD_REQUEST)
+        if len(members) > BRIDGE_MEMBER_BATCH_MAX:
+            return Response(
+                {'detail': f'members exceeds the maximum batch size of {BRIDGE_MEMBER_BATCH_MAX}'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        normalized = []
+        for index, entry in enumerate(members):
+            record = entry if isinstance(entry, dict) else {}
+            opentrain_user_id = _first_string(record.get('userId'), record.get('openTrainUserId'))
+            if not opentrain_user_id:
+                return Response(
+                    {'detail': f'members[{index}] must include userId'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            normalized.append((opentrain_user_id, _first_string(record.get('displayName'))))
+
+        organization, _ = ensure_runtime_organization(opentrain_organization_id)
+        ensured = []
+        for opentrain_user_id, display_name in normalized:
+            user = ensure_bridge_user(opentrain_user_id, organization, display_name=display_name)
+            ensured.append({'openTrainUserId': opentrain_user_id, 'runtimeUserId': str(user.id)})
+
+        return Response(
+            {'runtimeOrganizationId': str(organization.id), 'members': ensured},
+            status=status.HTTP_200_OK,
+        )
+
+
 class BridgeProjectCreateAPI(APIView):
     """Accepts the exact provisioning payload the OpenTrain control plane already sends."""
 

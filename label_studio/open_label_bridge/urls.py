@@ -11,6 +11,11 @@ urlpatterns = [
         views.BridgeOrganizationCreateAPI.as_view(),
         name='open-label-bridge-organizations',
     ),
+    path(
+        'open-label/bridge/organizations/members',
+        views.BridgeOrganizationMembersAPI.as_view(),
+        name='open-label-bridge-organization-members',
+    ),
     path('open-label/bridge/projects', views.BridgeProjectCreateAPI.as_view(), name='open-label-bridge-projects'),
     path(
         'open-label/bridge/projects/<int:project_id>',
