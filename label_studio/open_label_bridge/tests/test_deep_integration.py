@@ -232,3 +232,32 @@ class TestInstructionPatch:
         project.refresh_from_db()
         assert '<img' in project.expert_instruction
         assert '<table>' in project.expert_instruction
+
+    def test_get_returns_instruction_state(self, signing_env, org_with_project):
+        _, project, owner = org_with_project
+        project.expert_instruction = '<h1>Existing guide</h1>'
+        project.show_instruction = True
+        project.save(update_fields=['expert_instruction', 'show_instruction'])
+
+        client = Client()
+        response = client.get(self.project_path(project), **auth_headers(owner))
+        assert response.status_code == 200, response.content
+        data = response.json()
+        assert data['runtimeProjectId'] == str(project.id)
+        assert data['expert_instruction'] == '<h1>Existing guide</h1>'
+        assert data['show_instruction'] is True
+
+    def test_get_empty_instruction_defaults(self, signing_env, org_with_project):
+        _, project, owner = org_with_project
+        client = Client()
+        response = client.get(self.project_path(project), **auth_headers(owner))
+        assert response.status_code == 200, response.content
+        data = response.json()
+        assert data['expert_instruction'] == ''
+        assert data['show_instruction'] is False
+
+    def test_get_missing_project_404(self, signing_env, org_with_project):
+        _, _, owner = org_with_project
+        client = Client()
+        response = client.get('/open-label/bridge/projects/999999', **auth_headers(owner))
+        assert response.status_code == 404
