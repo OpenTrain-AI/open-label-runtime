@@ -54,6 +54,9 @@ class BridgeProjectLink(models.Model):
     opentrain_project_id = models.CharField(max_length=128, null=True, blank=True)
     opentrain_project_version_id = models.CharField(max_length=128, null=True, blank=True)
     task_type = models.CharField(max_length=128, null=True, blank=True)
+    linked_job_id = models.CharField(max_length=128, null=True, blank=True)
+    linked_job_title = models.CharField(max_length=512, null=True, blank=True)
+    linked_job_mode = models.CharField(max_length=32, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

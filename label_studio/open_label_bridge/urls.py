@@ -28,6 +28,11 @@ urlpatterns = [
         name='open-label-bridge-project-link',
     ),
     path(
+        'open-label/bridge/projects/<int:project_id>/job-link',
+        views.BridgeProjectJobLinkAPI.as_view(),
+        name='open-label-bridge-project-job-link',
+    ),
+    path(
         'open-label/bridge/projects/<int:project_id>/organization',
         views.BridgeProjectMoveAPI.as_view(),
         name='open-label-bridge-project-move',

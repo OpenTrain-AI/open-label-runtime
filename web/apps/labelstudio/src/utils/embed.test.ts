@@ -1,4 +1,4 @@
-import { notifyEmbedParent } from "./embed";
+import { notifyEmbedParent, onEmbedParentMessage } from "./embed";
 
 const EMBED_KEY = "open_label_embed";
 const EMBED_ORIGIN_KEY = "open_label_embed_origin";
@@ -51,5 +51,76 @@ describe("notifyEmbedParent", () => {
     window.sessionStorage.setItem(EMBED_KEY, "1");
     notifyEmbedParent({ type: "open-label:open-team" });
     expect(postMessage).not.toHaveBeenCalled();
+  });
+});
+
+describe("onEmbedParentMessage", () => {
+  beforeEach(() => {
+    window.sessionStorage.clear();
+  });
+
+  const dispatch = (origin: string, data: unknown) => {
+    window.dispatchEvent(new MessageEvent("message", { origin, data }));
+  };
+
+  it("delivers messages of the subscribed type from the embed origin", () => {
+    window.sessionStorage.setItem(EMBED_KEY, "1");
+    window.sessionStorage.setItem(EMBED_ORIGIN_KEY, PARENT_ORIGIN);
+    const handler = jest.fn();
+    const unsubscribe = onEmbedParentMessage("open-label:job-link-updated", handler);
+
+    dispatch(PARENT_ORIGIN, { type: "open-label:job-link-updated", projectId: 42 });
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler).toHaveBeenCalledWith({ type: "open-label:job-link-updated", projectId: 42 });
+    unsubscribe();
+  });
+
+  it("ignores messages from other origins", () => {
+    window.sessionStorage.setItem(EMBED_KEY, "1");
+    window.sessionStorage.setItem(EMBED_ORIGIN_KEY, PARENT_ORIGIN);
+    const handler = jest.fn();
+    const unsubscribe = onEmbedParentMessage("open-label:job-link-updated", handler);
+
+    dispatch("https://evil.test", { type: "open-label:job-link-updated", projectId: 42 });
+
+    expect(handler).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it("ignores messages of other types and non-object payloads", () => {
+    window.sessionStorage.setItem(EMBED_KEY, "1");
+    window.sessionStorage.setItem(EMBED_ORIGIN_KEY, PARENT_ORIGIN);
+    const handler = jest.fn();
+    const unsubscribe = onEmbedParentMessage("open-label:job-link-updated", handler);
+
+    dispatch(PARENT_ORIGIN, { type: "open-label:something-else" });
+    dispatch(PARENT_ORIGIN, "not-an-object");
+    dispatch(PARENT_ORIGIN, null);
+
+    expect(handler).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it("stops delivering after unsubscribe", () => {
+    window.sessionStorage.setItem(EMBED_KEY, "1");
+    window.sessionStorage.setItem(EMBED_ORIGIN_KEY, PARENT_ORIGIN);
+    const handler = jest.fn();
+    const unsubscribe = onEmbedParentMessage("open-label:job-link-updated", handler);
+
+    unsubscribe();
+    dispatch(PARENT_ORIGIN, { type: "open-label:job-link-updated", projectId: 42 });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("is a no-op outside embed mode", () => {
+    const handler = jest.fn();
+    const unsubscribe = onEmbedParentMessage("open-label:job-link-updated", handler);
+
+    dispatch(PARENT_ORIGIN, { type: "open-label:job-link-updated", projectId: 42 });
+
+    expect(handler).not.toHaveBeenCalled();
+    unsubscribe();
   });
 });

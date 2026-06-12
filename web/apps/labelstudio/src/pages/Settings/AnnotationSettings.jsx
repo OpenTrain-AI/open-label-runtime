@@ -8,6 +8,7 @@ import { cn } from "../../utils/bem";
 import { ModelVersionSelector } from "./AnnotationSettings/ModelVersionSelector";
 import { ProjectContext } from "../../providers/ProjectProvider";
 import { Divider } from "../../components/Divider/Divider";
+import { isEmbedded, notifyEmbedParent } from "../../utils/embed";
 
 export const AnnotationSettings = () => {
   const { project, fetchProject } = useContext(ProjectContext);
@@ -39,16 +40,70 @@ export const AnnotationSettings = () => {
           >
             <Form.Row columnCount={1}>
               <div className={cn("settings-wrapper").elem("header").toClassName()}>Labeling Instructions</div>
-              <div class="settings-description">
-                <p style={{ marginBottom: "0" }}>Write instructions to help users complete labeling tasks.</p>
-                <p style={{ marginTop: "8px" }}>
-                  The instruction field supports HTML markup and it allows use of images, iframes (pdf).
-                </p>
-              </div>
-              <div>
-                <Toggle label="Show before labeling" name="show_instruction" />
-              </div>
-              <TextArea name="expert_instruction" style={{ minHeight: 128, maxWidth: "520px" }} />
+              {isEmbedded() ? (
+                <>
+                  <div className="settings-description">
+                    {project.opentrain_job ? (
+                      <p style={{ marginBottom: "0" }}>
+                        Instructions are managed in OpenTrain on the linked job and shown to labelers here.
+                      </p>
+                    ) : (
+                      <p style={{ marginBottom: "0" }}>
+                        Assign this project to a job in General settings to manage instructions in OpenTrain.
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <Toggle label="Show before labeling" name="show_instruction" />
+                  </div>
+                  {project.expert_instruction ? (
+                    <div
+                      data-testid="instruction-preview"
+                      style={{
+                        maxWidth: "520px",
+                        maxHeight: 320,
+                        overflow: "auto",
+                        border: "1px solid var(--color-neutral-border)",
+                        borderRadius: 8,
+                        padding: 16,
+                      }}
+                      // Bridge writes bleach-sanitize expert_instruction server-side with script/noscript stripped
+                      dangerouslySetInnerHTML={{ __html: project.expert_instruction }}
+                    />
+                  ) : null}
+                  {project.opentrain_job && (
+                    <div>
+                      <Button
+                        type="button"
+                        look="outlined"
+                        aria-label="Edit instructions in OpenTrain"
+                        onClick={() =>
+                          notifyEmbedParent({
+                            type: "open-label:edit-instructions",
+                            projectId: project.id,
+                            title: project.title ?? "New project",
+                          })
+                        }
+                      >
+                        Edit in OpenTrain
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div class="settings-description">
+                    <p style={{ marginBottom: "0" }}>Write instructions to help users complete labeling tasks.</p>
+                    <p style={{ marginTop: "8px" }}>
+                      The instruction field supports HTML markup and it allows use of images, iframes (pdf).
+                    </p>
+                  </div>
+                  <div>
+                    <Toggle label="Show before labeling" name="show_instruction" />
+                  </div>
+                  <TextArea name="expert_instruction" style={{ minHeight: 128, maxWidth: "520px" }} />
+                </>
+              )}
             </Form.Row>
 
             <Divider height={32} />
